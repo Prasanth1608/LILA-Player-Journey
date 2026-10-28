@@ -1,0 +1,16 @@
+# Normalise line endings: text files stored with LF in the repo,
+# so Windows and Mac/Linux checkouts don't show every line as changed.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files: never touch line endings or try to diff them
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.webp   binary
+*.ico    binary
+*.parquet binary
+*.nakama-0 binary

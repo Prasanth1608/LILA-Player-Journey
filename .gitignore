@@ -1,0 +1,17 @@
+# Raw game data stays outside the repo (large, provided separately)
+player_data/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
