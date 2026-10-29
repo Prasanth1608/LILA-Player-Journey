@@ -9,7 +9,7 @@ No logic here, only values the other files use. Anything that might change
 # ---------------------------------------------------------------------------
 # Written into every JSON file. Bump it when the shape of the JSON changes
 # (see DATA_CONTRACT.md), so the website knows which format it is reading.
-DATA_VERSION = 1
+DATA_VERSION = 2   # 2: heatmaps stored per match, for 9 metrics
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +45,25 @@ KNOWN_EVENTS = MOVEMENT_EVENTS | KILL_EVENTS | DEATH_EVENTS | LOOT_EVENTS
 # die twice, so identical repeats of these are dropped.
 # Repeated Loot/BotKill rows are kept: multi-pickups and multi-kills are real.
 DEDUPE_EVENTS = MOVEMENT_EVENTS | DEATH_EVENTS
+
+
+# ---------------------------------------------------------------------------
+# 4b. Heatmap metrics (mirror the website's layer grid: Players / Bots)
+# ---------------------------------------------------------------------------
+# metric id → (taken from bot files?, event types)
+# Combat and loot are recorded in HUMAN files, so the "bots" kill/death metrics
+# are the human side of the same fights (drawn at the player's position).
+HEAT_METRICS = {
+    "traffic_players": (False, {"Position"}),
+    "traffic_bots":    (True,  {"BotPosition"}),
+    "kills_players":   (False, {"Kill", "BotKill"}),
+    "kills_bots":      (False, {"BotKilled"}),        # a bot killed a player
+    "deaths_players":  (False, {"Killed", "BotKilled"}),
+    "deaths_bots":     (False, {"BotKill"}),          # a player killed a bot
+    "storm_players":   (False, {"KilledByStorm"}),
+    "storm_bots":      (True,  {"KilledByStorm"}),
+    "loot_players":    (False, {"Loot"}),
+}
 
 
 # ---------------------------------------------------------------------------

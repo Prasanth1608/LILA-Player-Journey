@@ -82,8 +82,22 @@ def test_bot_storm_death_is_a_marker_but_not_a_player_death():
     assert len(events) == 2                                     # both drawn as markers
     index = build_index(df, events)
     assert index["matches"][0]["counts"]["storm"] == 1          # only the human counted
-    heat = dict(build_heatmaps(df, events))["AmbroseValley"]
-    assert sum(c for _, c in heat["layers"]["deaths"]["February_10"]) == 1
+    heat = dict(build_heatmaps(df))["AmbroseValley"]["matches"]["m1"]
+    assert sum(heat["storm_players"][1::2]) == 1                # [cell, count, ...] → counts
+    assert sum(heat["storm_bots"][1::2]) == 1
+    assert "deaths_players" not in heat                         # storm deaths are their own metric
+
+
+def test_heatmap_metrics_follow_the_layer_rules():
+    human = rows("Position", "Position", "BotKill", "BotKilled", "Loot", user="h1")
+    bot = rows("BotPosition", user="b1")
+    df = pd.concat([human, bot], ignore_index=True)
+    df["date"] = "February_10"
+    df = add_uv(add_time(tag_bots(df)))
+    heat = dict(build_heatmaps(df))["AmbroseValley"]["matches"]["m1"]
+    total = {k: sum(v[1::2]) for k, v in heat.items()}
+    assert total == {"traffic_players": 2, "traffic_bots": 1, "kills_players": 1,
+                     "deaths_bots": 1, "kills_bots": 1, "deaths_players": 1, "loot_players": 1}
 
 
 def test_short_match_id_drops_server_suffix():

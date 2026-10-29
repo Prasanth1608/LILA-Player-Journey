@@ -17,9 +17,9 @@ export function shortId(id) {
   return id.slice(0, 8);
 }
 
-// 1 → "1 bot", 3 → "3 bots"
+// 1 → "1 bot", 3 → "3 bots", 70412 → "70,412 bots"
 export function plural(count, one, many) {
-  return `${count} ${count === 1 ? one : many}`;
+  return `${count.toLocaleString("en-US")} ${count === 1 ? one : many}`;
 }
 
 // One-line description of a match, shown above the map:

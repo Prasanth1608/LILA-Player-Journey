@@ -43,7 +43,10 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
   gap: 16px;
 }
 
-.topbar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.topbar-actions .segmented { min-width: 220px; }
+.topbar-actions .segmented button { padding: 8px 16px; font-weight: 500; }
 .topbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
 .subtitle { color: var(--muted); }
 
@@ -170,6 +173,39 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
   border-radius: 4px; background: var(--panel-2);
   min-width: 0;
 }
+
+.side-panels { display: flex; flex-direction: column; gap: 14px; width: 290px; max-width: 100%; }
+@media (max-width: 1100px) { .side-panels { width: auto; } }
+
+/* ---------- Heatmap panel ---------- */
+.heatmap-panel { display: flex; flex-direction: column; gap: 8px; }
+.link-group { display: inline-flex; gap: 12px; }
+.heat-grid .layer-toggle { width: 56px; justify-content: center; }
+.heat-grid .heat-choice[aria-pressed="true"] {
+  border-color: transparent; color: #1a1206; font-weight: 600;
+  background: linear-gradient(135deg, rgb(32, 178, 150), rgb(240, 212, 58), rgb(214, 34, 70));
+}
+.heat-legend { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.heat-bar { height: 8px; border-radius: 4px; border: 1px solid var(--line); }
+.heat-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); }
+.heat-note { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
+.map-wrap { position: relative; min-width: 0; }
+.heat-tooltip {
+  position: absolute; pointer-events: none; transform: translate(12px, -50%);
+  background: rgba(10, 14, 18, 0.92); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; font-size: 12px; line-height: 1.5; white-space: nowrap; z-index: 2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Match list: Heatmaps checkboxes ---------- */
+.list-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px 0;
+}
+.row-item { display: flex; align-items: center; gap: 4px; }
+.row-item .row { flex: 1; min-width: 0; }
+.row-check { width: 16px; height: 16px; margin: 0 2px 0 6px; flex: none; accent-color: var(--accent); cursor: pointer; }
 
 /* ---------- Layer panel (doubles as the legend) ---------- */
 .layers { border-collapse: separate; border-spacing: 4px; align-self: start; }

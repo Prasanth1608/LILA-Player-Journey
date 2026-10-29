@@ -2,8 +2,8 @@
 
 Produces three kinds of output (exact shapes in DATA_CONTRACT.md):
   - index.json            → list of maps, dates and matches (filters + match list)
-  - matches/<id>.json     → one match: player paths + event markers (map + playback)
-  - heatmaps/<map>.json   → kill / death / traffic counts per grid cell, per day
+  - matches/<id>.json     → one match: player paths + event markers (Replay mode)
+  - heatmaps/<map>.json   → per match, counts per grid cell for 9 metrics (Heatmaps mode)
 """
 
 import re
@@ -11,7 +11,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from config import (DATA_VERSION, DEATH_EVENTS, HEATMAP_GRID, KILL_EVENTS,
+from config import (DATA_VERSION, DEATH_EVENTS, HEAT_METRICS, HEATMAP_GRID, KILL_EVENTS,
                     LOOT_EVENTS, MAPS, MOVEMENT_EVENTS, PARTIAL_DATES, UV_DECIMALS)
 
 # Combat and loot markers come from human files only: in bot files their meaning
@@ -140,43 +140,39 @@ def build_matches(df: pd.DataFrame, events: pd.DataFrame):
 
 
 # ---------------------------------------------------------------------------
-# 5. build_heatmaps: counts per grid cell, per day, per map
+# 5. build_heatmaps: per match, counts per grid cell for each metric
 # ---------------------------------------------------------------------------
-def _grid_counts(rows: pd.DataFrame) -> dict[str, list[list[int]]]:
-    """Count rows per heatmap cell, separately for each day.
+def build_heatmaps(df: pd.DataFrame):
+    """For each map: every match's cell counts for the 9 metrics in config.HEAT_METRICS.
 
+    Stored per match so the website can add up ANY set of ticked matches instantly.
     The map is split into HEATMAP_GRID × HEATMAP_GRID cells (invisible; used only
-    for counting). Cell number = row × grid + column, with row 0 at the TOP,
-    matching the image. Only cells with a count are kept: [[cell, count], ...].
+    for counting). Cell number = row × grid + column, with row 0 at the TOP, matching
+    the image. Counts are a flat list [cell, count, cell, count, ...] (only cells > 0).
+
+    Yields (map id, heatmap data).
     """
     n = HEATMAP_GRID
-    on_map = rows[rows["u"].between(0, 1) & rows["v"].between(0, 1)]
+    on_map = df[df["u"].between(0, 1) & df["v"].between(0, 1)]
     col = np.minimum((on_map["u"] * n).astype(int), n - 1)          # 0 .. n-1 across
     row = np.minimum(((1 - on_map["v"]) * n).astype(int), n - 1)    # 0 .. n-1 down (flipped)
-    cells = (row * n + col).rename("cell")
-    counts = cells.groupby([on_map["date"], cells]).size()          # (day, cell) → count
-    return {day: [[int(c), int(k)] for c, k in s.droplevel(0).items()]
-            for day, s in counts.groupby(level=0)}
+    cell = row * n + col
 
+    # One table of (map, match, metric, cell) rows covering all metrics, counted in one go
+    parts = []
+    for metric, (from_bot_files, types) in HEAT_METRICS.items():
+        rows = (on_map["is_bot"] == from_bot_files) & on_map["event"].isin(types)
+        parts.append(pd.DataFrame({"map": on_map.loc[rows, "map_id"], "match": on_map.loc[rows, "match_id"],
+                                   "metric": metric, "cell": cell[rows]}))
+    counts = pd.concat(parts).groupby(["map", "match", "metric", "cell"]).size()
 
-def build_heatmaps(df: pd.DataFrame, events: pd.DataFrame):
-    """For each map: kill, death and traffic counts per cell, per day.
+    # Nest as {map: {match: {metric: [cell, count, ...]}}}
+    nested: dict = {m: {} for m in df["map_id"].unique()}   # every map gets a file, even if empty
+    for (map_id, match_id, metric), s in counts.groupby(level=[0, 1, 2]):
+        flat = [int(v) for c, k in s.droplevel([0, 1, 2]).items() for v in (c, k)]
+        nested[map_id].setdefault(short_match_id(match_id), {})[metric] = flat
 
-    Split by day so the website can add up only the days selected in the date filter.
-    kills = Kill + BotKill · deaths = Killed + BotKilled + KilledByStorm · traffic = snapshots
-    Kills and deaths are HUMAN only ("where players get kills / die"); traffic includes bots.
-    """
-    human_events = events[~events["is_bot"]]   # keeps a bot storm death out of the death heatmap
     for map_id in MAPS:
-        m_rows = df[df["map_id"] == map_id]
-        m_events = human_events[human_events["map_id"] == map_id]
-        if m_rows.empty:
-            continue
-        yield map_id, {
-            "version": DATA_VERSION, "map": map_id, "grid": HEATMAP_GRID,
-            "layers": {
-                "kills":   _grid_counts(m_events[m_events["event"].isin(KILL_EVENTS)]),
-                "deaths":  _grid_counts(m_events[m_events["event"].isin(DEATH_EVENTS)]),
-                "traffic": _grid_counts(m_rows[m_rows["event"].isin(MOVEMENT_EVENTS)]),
-            },
-        }
+        if map_id in nested:
+            yield map_id, {"version": DATA_VERSION, "map": map_id, "grid": n,
+                           "metrics": list(HEAT_METRICS), "matches": nested[map_id]}

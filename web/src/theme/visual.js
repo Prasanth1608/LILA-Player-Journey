@@ -22,6 +22,24 @@ export const MARKER = {
   outlineWidth: 1.5,
 };
 
+// Heatmap colour ramp: few → many, green → yellow → red.
+// Starts transparent so quiet areas show the map. The green leans teal and the red
+// leans crimson so the ramp still reads for red/green colour-blind viewers.
+export const HEATMAP = {
+  stops: [
+    [0.0, [32, 178, 150, 0.0]],
+    [0.12, [32, 178, 150, 0.5]],
+    [0.45, [240, 212, 58, 0.72]],
+    [0.75, [245, 130, 40, 0.85]],
+    [1.0, [214, 34, 70, 0.92]],
+  ],
+  // Blob rendering: each grid cell becomes a soft round blob; overlapping blobs add up.
+  radiusCells: 1.6,   // blob radius in grid cells (each cell = 1/64 of the map)…
+  minRadiusPx: 14,    // …but never smaller than this on screen, so single events stay visible
+  blobAlpha: 0.6,     // strength of the busiest cell's blob; overlaps build up from there
+  minWeight: 0.08,    // share of blobAlpha that even a 1-event cell gets, so it stays visible
+};
+
 export const PLAYBACK = {
   speeds: [5, 10, 20, 40],     // × real time (matches are 5–15 minutes long)
   defaultSpeed: 10,

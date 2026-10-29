@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMatchIndex } from "./hooks/useMatchIndex.js";
-import { useMatch } from "./hooks/useMatch.js";
 import { filterMatches } from "./lib/filterMatches.js";
-import { mapLabel, matchSummary } from "./lib/format.js";
+import { plural, shortId } from "./lib/format.js";
+import { toggleInSet } from "./lib/sets.js";
 import { DEFAULT_LAYERS } from "./config/layers.js";
-import { PLAYBACK } from "./theme/visual.js";
+import { DEFAULT_HEAT_SELECTION } from "./config/heatmapMetrics.js";
 import { PlaybackClock } from "./renderer/PlaybackClock.js";
 import { FilterBar } from "./components/FilterBar.jsx";
 import { MatchList } from "./components/MatchList.jsx";
-import { LayerPanel } from "./components/LayerPanel.jsx";
-import { MapCanvas } from "./components/MapCanvas.jsx";
-import { Timeline } from "./components/Timeline.jsx";
+import { ReplayView } from "./components/ReplayView.jsx";
+import { HeatmapView } from "./components/HeatmapView.jsx";
+import { SegmentedControl } from "./components/ui/SegmentedControl.jsx";
 import { EmptyState } from "./components/ui/EmptyState.jsx";
+
+const MODES = [
+  { value: "replay", label: "Replay" },
+  { value: "heatmaps", label: "Heatmaps" },
+];
 
 export default function App() {
   const { index, error } = useMatchIndex();
@@ -45,22 +50,24 @@ export default function App() {
 }
 
 // The main tool, rendered once index.json has loaded.
+// State lives here so it survives switching modes; each mode's view is only
+// mounted while active, so the other mode loads and animates nothing.
 function Explorer({ index }) {
-  // ---- App state: one place for everything the filters control ----
+  // ---- Shared: filters and the clicked match ----
+  const [mode, setMode] = useState("replay");
   const [mapId, setMapId] = useState(index.maps[0].id);
   const [selectedDates, setSelectedDates] = useState(() => new Set(index.dates.map((d) => d.id)));
   const [sortBy, setSortBy] = useState("players");
   const [selectedId, setSelectedId] = useState(null);
-  const [layers, setLayers] = useState(DEFAULT_LAYERS);   // which map layers are switched on
+
+  // ---- Replay settings ----
+  const [layers, setLayers] = useState(DEFAULT_LAYERS);
   const [trail, setTrail] = useState("full");              // "full" path so far, or "recent" only
   const [clock] = useState(() => new PlaybackClock());     // one clock for the whole session
 
-  const { match, loading, error: matchError } = useMatch(selectedId);
-
-  // A newly opened match starts paused on its end state (everything visible)
-  useEffect(() => {
-    clock.load(match?.duration ?? 0);
-  }, [clock, match]);
+  // ---- Heatmaps settings ----
+  const [heatSelection, setHeatSelection] = useState(DEFAULT_HEAT_SELECTION); // one metric + side
+  const [checked, setChecked] = useState(() => new Set()); // ticked matches (start empty)
 
   // ---- Derived data (recomputed only when its inputs change) ----
   const dateLabels = useMemo(
@@ -73,40 +80,44 @@ function Explorer({ index }) {
   );
   const selected = matches.find((m) => m.id === selectedId) ?? null;
 
-  // If the filters hide the selected match, clear the selection
+  // Ticked matches still visible under the current filters (hidden ticks are ignored)
+  const visibleChecked = useMemo(
+    () => matches.filter((m) => checked.has(m.id)).map((m) => m.id),
+    [matches, checked]
+  );
+  // Heatmap source: the ticked matches; if none ticked, the clicked match
+  const heatIds = useMemo(
+    () => (visibleChecked.length > 0 ? visibleChecked : selected ? [selected.id] : []),
+    [visibleChecked, selected]
+  );
+  const heatSource = visibleChecked.length > 0
+    ? `${plural(visibleChecked.length, "match", "matches")} combined`
+    : selected ? `Match ${shortId(selected.id)}` : "";
+
+  // If the filters hide the clicked match, clear it
   useEffect(() => {
     if (selectedId && !selected) setSelectedId(null);
   }, [selectedId, selected]);
 
-  // ---- Filter actions ----
-  const toggleDate = (id) =>
-    setSelectedDates((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  // ---- Actions ----
+  const changeMode = (next) => {
+    clock.pause(); // nothing keeps animating in the background
+    setMode(next);
+  };
+  const changeMap = (id) => {
+    setMapId(id);
+    setChecked(new Set()); // ticks belong to one map's comparison
+  };
   const toggleAllDates = () =>
     setSelectedDates((prev) =>
       prev.size === index.dates.length ? new Set() : new Set(index.dates.map((d) => d.id))
     );
-  const toggleLayer = (id) =>
-    setLayers((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
 
   const mapImage = index.maps.find((m) => m.id === mapId)?.image;
-  const status = matchError
-    ? `Couldn't load this match: ${matchError}`
-    : loading
-      ? "Loading match…"
-      : selected
-        ? matchSummary(selected, dateLabels[selected.date])
-        : "Select a match to see it on the map";
+  const inHeatmaps = mode === "heatmaps";
 
   return (
-    <Shell>
+    <Shell actions={<SegmentedControl label="View" options={MODES} value={mode} onChange={changeMode} />}>
       <div className="layout">
         <aside className="sidebar">
           <FilterBar
@@ -114,8 +125,8 @@ function Explorer({ index }) {
             dates={index.dates}
             mapId={mapId}
             selectedDates={selectedDates}
-            onMapChange={setMapId}
-            onToggleDate={toggleDate}
+            onMapChange={changeMap}
+            onToggleDate={(id) => setSelectedDates((prev) => toggleInSet(prev, id))}
             onAllDates={toggleAllDates}
           />
           <MatchList
@@ -125,40 +136,49 @@ function Explorer({ index }) {
             onSelect={setSelectedId}
             sortBy={sortBy}
             onSortChange={setSortBy}
+            checked={inHeatmaps ? checked : null}
+            onToggleCheck={(id) => setChecked((prev) => toggleInSet(prev, id))}
+            onCheckAll={() => setChecked(new Set(matches.map((m) => m.id)))}
+            onClearChecks={() => setChecked(new Set())}
           />
         </aside>
 
-        <main className="stage">
-          <div className="stage-head">
-            <h2>{mapLabel(mapId)}</h2>
-            <span className="stage-meta" role="status">{status}</span>
-          </div>
-          <div className="stage-body">
-            <div className="map-column">
-              <MapCanvas
-                imageSrc={mapImage}
-                match={match}
-                layers={layers}
-                trailSeconds={trail === "recent" ? PLAYBACK.trailSeconds : null}
-                clock={clock}
-                label={`${mapLabel(mapId)} minimap${selected ? `, ${matchSummary(selected, dateLabels[selected.date])}` : ""}`}
-              />
-              <Timeline clock={clock} match={match} layers={layers} trail={trail} onTrailChange={setTrail} />
-            </div>
-            <LayerPanel match={match} enabled={layers} onToggle={toggleLayer} />
-          </div>
-        </main>
+        {inHeatmaps ? (
+          <HeatmapView
+            mapId={mapId}
+            mapImage={mapImage}
+            matchIds={heatIds}
+            sourceLabel={heatSource}
+            selection={heatSelection}
+            onSelect={setHeatSelection}
+          />
+        ) : (
+          <ReplayView
+            mapId={mapId}
+            mapImage={mapImage}
+            selected={selected}
+            dateLabel={selected ? dateLabels[selected.date] : ""}
+            layers={layers}
+            onToggleLayer={(id) => setLayers((prev) => toggleInSet(prev, id))}
+            trail={trail}
+            onTrailChange={setTrail}
+            clock={clock}
+          />
+        )}
       </div>
     </Shell>
   );
 }
 
-function Shell({ children }) {
+function Shell({ children, actions = null }) {
   return (
     <div className="app">
       <header className="topbar">
-        <h1>LILA Player Journeys</h1>
-        <span className="subtitle">Where players move, fight, loot and die</span>
+        <div className="brand">
+          <h1>LILA Player Journeys</h1>
+          <span className="subtitle">Where players move, fight, loot and die</span>
+        </div>
+        {actions && <div className="topbar-actions">{actions}</div>}
       </header>
       {children}
     </div>

@@ -38,7 +38,7 @@ def run(input_dir: Path, out_dir: Path) -> None:
     size = write_json(out_dir / "index.json", index)
     for mid, match in build_matches(df, events):
         size += write_json(out_dir / "matches" / f"{mid}.json", match)
-    for map_id, heat in build_heatmaps(df, events):
+    for map_id, heat in build_heatmaps(df):
         size += write_json(out_dir / "heatmaps" / f"{map_id}.json", heat)
 
     print_summary(files, skipped, failed, raw, df, report, index, out_dir, size)

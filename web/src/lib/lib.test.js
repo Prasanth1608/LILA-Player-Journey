@@ -21,6 +21,7 @@ describe("format", () => {
   it("pluralises", () => {
     expect(plural(1, "bot", "bots")).toBe("1 bot");
     expect(plural(0, "bot", "bots")).toBe("0 bots");
+    expect(plural(70412, "sample", "samples")).toBe("70,412 samples");
   });
   it("summarises a match", () => {
     const m = match("fbbc5d02-dd79", "AmbroseValley", "February_10", { duration: 512, humans: 2, bots: 14 });

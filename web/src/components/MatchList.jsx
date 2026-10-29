@@ -3,9 +3,28 @@ import { SORTS } from "../lib/filterMatches.js";
 import { formatDuration, plural, shortId } from "../lib/format.js";
 
 // The matches that pass the filters. Click one to select it.
-export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, onSortChange }) {
+// With `checked` (Heatmaps mode only), each row also gets a checkbox for comparing
+// several matches; ticking never changes the clicked selection.
+export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, onSortChange,
+                            checked = null, onToggleCheck, onCheckAll, onClearChecks }) {
+  const checkable = checked !== null;
+  const tickedCount = checkable ? matches.filter((m) => checked.has(m.id)).length : 0;
+
   return (
     <section className="match-list" aria-label="Matches">
+      {checkable && (
+        <div className="list-actions">
+          <span className="label">{tickedCount === 0 ? "Tick to compare" : `${tickedCount} ticked`}</span>
+          <span className="link-group">
+            {tickedCount < matches.length && (
+              <button type="button" className="link-button" onClick={onCheckAll}>Select all</button>
+            )}
+            {tickedCount > 0 && (
+              <button type="button" className="link-button" onClick={onClearChecks}>Clear</button>
+            )}
+          </span>
+        </div>
+      )}
       <div className="list-head">
         <span className="label">{plural(matches.length, "match", "matches")}</span>
         <label className="sort">
@@ -23,7 +42,16 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
       ) : (
         <ul className="rows">
           {matches.map((m) => (
-            <li key={m.id}>
+            <li key={m.id} className="row-item">
+              {checkable && (
+                <input
+                  type="checkbox"
+                  className="row-check"
+                  checked={checked.has(m.id)}
+                  onChange={() => onToggleCheck(m.id)}
+                  aria-label={`Compare match ${shortId(m.id)}`}
+                />
+              )}
               <button
                 type="button"
                 className="row"

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Renderer } from "../renderer/Renderer.js";
 
-// Mounts the canvas renderer and hands it what to draw.
+// Replay canvas: mounts the Replay renderer and hands it what to draw.
 // React only says WHAT to show; the Renderer handles HOW (and redraws on every clock tick).
 export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label }) {
   const canvasRef = useRef(null);
