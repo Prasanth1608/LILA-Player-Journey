@@ -1,18 +1,41 @@
 /* Design tokens: every colour and size used by the app lives here. */
+/* Design tokens: every UI colour and size lives here.
+   Theme: "Cartographer × Studio". Dark is the default; light is set by
+   data-theme="light" on <html> (hooks/useTheme.js). The map itself and the
+   heatmap colours are the same in both themes. */
 :root {
-  --bg: #0f1418;
-  --panel: #171e23;
-  --panel-2: #1d262c;
-  --line: #2a353d;
-  --text: #e6ecef;
-  --muted: #8d9aa3;
-  --faint: #5d6a73;
-  --accent: #f0a24a;          /* selection + focus */
-  --accent-ink: #1a1206;      /* text on accent */
-  --radius: 8px;
-  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --bg: #1c1c1f;
+  --panel: #26262a;
+  --panel-2: #2e2e33;
+  --line: #38383e;
+  --text: #ececee;
+  --muted: #b4b4bb;
+  --faint: #8a8a92;
+  --accent: #2f6fe4;          /* selection fills (white text on top) */
+  --accent-ink: #ffffff;
+  --accent-text: #79a8ff;     /* accent used as text/links: lighter for contrast */
+  --overlay: rgba(28, 28, 31, 0.92); /* tooltips and buttons over the map */
+  --selected-border: #ffffff;  /* ring around a switched-on layer toggle */
+  --radius: 10px;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: "IBM Plex Serif", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f4f4f6;
+  --panel: #ffffff;
+  --panel-2: #ececf0;
+  --line: #dcdce1;
+  --text: #1c1c1f;
+  --muted: #4f4f57;
+  --faint: #6c6c74;
+  --accent: #2f6fe4;
+  --accent-ink: #ffffff;
+  --accent-text: #1f5bc9;
+  --overlay: rgba(255, 255, 255, 0.94);
+  --selected-border: #1c1c1f;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -47,7 +70,13 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 .brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .topbar-actions .segmented { min-width: 220px; }
 .topbar-actions .segmented button { padding: 8px 16px; font-weight: 500; }
-.topbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+.topbar h1 { margin: 0; font-family: var(--serif); font-size: 24px; font-weight: 600; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.theme-toggle {
+  width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: grid; place-items: center;
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+}
+.theme-toggle svg { width: 18px; height: 18px; }
 .subtitle { color: var(--muted); }
 
 .layout {
@@ -78,26 +107,27 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 }
 .link-button {
   background: none; border: 0; padding: 0; cursor: pointer;
-  color: var(--accent); font-size: 12px;
+  color: var(--accent-text); font-size: 12px;
 }
 
 .segmented {
-  display: flex; flex-wrap: wrap;
-  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  display: flex; flex-wrap: wrap; gap: 3px; padding: 3px;
+  background: var(--panel-2); border-radius: 8px;
 }
 .segmented button {
-  flex: 1 1 auto; padding: 7px 10px; border: 0; background: transparent; cursor: pointer;
-  border-right: 1px solid var(--line);
+  flex: 1 1 auto; padding: 6px 10px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer;
 }
-.segmented button:last-child { border-right: 0; }
+.segmented button:hover { color: var(--text); }
 .segmented button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  padding: 5px 10px; border-radius: 999px; cursor: pointer;
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
   background: transparent; border: 1px solid var(--line); color: var(--muted);
 }
-.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--panel-2); }
+.chip[aria-pressed="true"] { border-color: transparent; color: var(--accent-ink); background: var(--accent); }
+.chip[aria-pressed="true"] .chip-note { color: rgba(255, 255, 255, 0.8); }
 .chip-note { color: var(--faint); font-size: 12px; }
 
 /* ---------- Match list ---------- */
@@ -121,7 +151,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
   padding: 8px 10px; display: flex; flex-direction: column; gap: 4px;
 }
 .row:hover { background: var(--panel-2); }
-.row[aria-pressed="true"] { background: var(--panel-2); border-color: var(--accent); }
+.row[aria-pressed="true"] { background: var(--panel-2); border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .row-top { display: flex; justify-content: space-between; gap: 8px; }
 .row-id { font-family: var(--mono); font-size: 13px; }
 .row-meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -133,7 +163,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 /* ---------- Map area ---------- */
 .stage { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .stage-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.stage-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.stage-head h2 { margin: 0; font-family: var(--serif); font-size: 18px; font-weight: 600; }
 .stage-meta { color: var(--muted); font-size: 13px; }
 
 .stage-body {
@@ -182,18 +212,16 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 .link-group { display: inline-flex; gap: 12px; }
 .heat-grid .layer-toggle { width: 56px; justify-content: center; }
 .heat-grid .heat-choice[aria-pressed="true"] {
-  border-color: transparent; color: #1a1206; font-weight: 600;
+  border-color: transparent; color: #141416; font-weight: 600; box-shadow: none;
   background: linear-gradient(135deg, rgb(32, 178, 150), rgb(240, 212, 58), rgb(214, 34, 70));
 }
 .heat-legend { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
-.heat-bar { height: 8px; border-radius: 4px; border: 1px solid var(--line); }
-.heat-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); }
 .heat-note { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
 
 .map-wrap { position: relative; min-width: 0; }
 .heat-tooltip {
   position: absolute; pointer-events: none; transform: translate(12px, -50%);
-  background: rgba(10, 14, 18, 0.92); border: 1px solid var(--line); border-radius: 6px;
+  background: var(--overlay); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
   padding: 6px 8px; font-size: 12px; line-height: 1.5; white-space: nowrap; z-index: 2;
   font-variant-numeric: tabular-nums;
 }
@@ -217,12 +245,17 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
   padding: 5px 8px; border-radius: 6px; cursor: pointer;
   background: transparent; border: 1px solid var(--line); color: var(--muted);
 }
-.layer-toggle[aria-pressed="true"] { background: var(--panel-2); border-color: var(--faint); color: var(--text); }
+/* On: bright ring (border + 1px shadow, so nothing shifts). Off: grey and faded. */
+.layer-toggle[aria-pressed="true"] {
+  background: var(--panel-2); border-color: var(--selected-border); color: var(--text);
+  box-shadow: 0 0 0 1px var(--selected-border);
+}
+.layer-toggle[aria-pressed="false"] .layer-count { color: var(--faint); }
 .layer-toggle[aria-pressed="false"] .swatch { opacity: 0.35; }
-.layer-toggle[data-empty] { opacity: 0.5; }
+.layer-toggle[data-empty] .layer-count { opacity: 0.6; } /* nothing to draw: dim the number, keep the on/off ring visible */
 .layer-count { font-variant-numeric: tabular-nums; font-size: 12px; }
 .layer-none { display: inline-block; width: 72px; text-align: center; color: var(--faint); }
-.swatch { width: 18px; height: 18px; flex: none; }
+.swatch { width: 20px; height: 20px; flex: none; }
 
 /* ---------- Empty / loading ---------- */
 .empty { padding: 28px 16px; text-align: center; }
@@ -236,9 +269,51 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 }
 .zoom-controls button {
   width: 34px; height: 34px; border-radius: 6px; cursor: pointer;
-  background: rgba(15, 20, 24, 0.85); border: 1px solid var(--line); color: var(--text);
+  background: var(--overlay); border: 1px solid var(--line); color: var(--text);
   font-size: 18px; line-height: 1;
 }
 .zoom-controls .zoom-reset { font-size: 11px; font-variant-numeric: tabular-nums; }
 .zoom-controls button:hover:not(:disabled) { border-color: var(--faint); }
 .zoom-controls button:disabled { color: var(--faint); cursor: default; }
+
+/* ---------- Match search ---------- */
+.list-search { padding: 10px 14px 0; }
+.list-search input {
+  width: 100%; padding: 7px 10px; border-radius: 8px; font: inherit; font-family: var(--mono); font-size: 13px;
+  background: var(--panel-2); border: 1px solid transparent; color: var(--text);
+}
+.list-search input::placeholder { font-family: var(--font); color: var(--faint); }
+.list-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.layer-panel { display: flex; flex-direction: column; gap: 6px; }
+.heat-levels { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+.heat-level { display: inline-flex; align-items: center; gap: 6px; }
+.heat-level-chip { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid; }
+
+/* ---------- Desktop: the whole app fits one screen ----------
+   No page scroll: the match list scrolls inside itself and ends on the same line as
+   the map panel; the map takes the largest square that fits, timeline always visible.
+   Narrow or very short windows keep the normal stacked, scrolling page. */
+@media (min-width: 821px) and (min-height: 560px) {
+  html, body, #root { height: 100%; }
+  .app { height: 100dvh; overflow: hidden; }
+  .layout { flex: 1; min-height: 0; align-items: stretch; }
+
+  .sidebar { min-height: 0; }
+  .filters { flex: none; }
+  .match-list { flex: 1; min-height: 0; }
+  .rows { flex: 1; min-height: 0; max-height: none; }
+
+  .stage { min-height: 0; }
+  .stage-body { flex: 1; min-height: 0; align-items: stretch; }
+  .side-panels { align-self: start; }
+  .map-column { min-height: 0; }
+
+  /* Largest square that fits the free space (cq units = the map-area's own size) */
+  .map-area { flex: 1; min-height: 0; container-type: size; display: flex; justify-content: center; }
+  .map-area .map-wrap { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); }
+  .map-area .map-canvas { width: 100%; height: 100%; }
+}
+@media (min-width: 821px) and (max-width: 1100px) and (min-height: 560px) {
+  .stage-body { display: flex; flex-direction: column; } /* layers below the map; map shrinks to fit */
+  .map-column { flex: 1; } /* the map takes the space the layers leave */
+}

@@ -5,9 +5,9 @@ import { drawShape } from "../shapes.js";
 
 // events: [{ t, u, v, ... }] already filtered to one layer
 // pulseWindow: match-seconds during which a new event shows a ring (0 = no rings)
-export function drawMarkers(ctx, view, events, { shape, color, outlineColor }, { time, pulseWindow }) {
+export function drawMarkers(ctx, view, events, { shape, color }, { time, pulseWindow }) {
   const r = MARKER.size[shape] ?? 7;
-  const outline = outlineColor ?? COLORS.outline;
+  const outline = COLORS.outline;
 
   for (const e of events) {
     if (e.t > time) continue; // hasn't happened yet

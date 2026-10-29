@@ -1,11 +1,12 @@
 import { EmptyState } from "./ui/EmptyState.jsx";
+import { AllClearLinks } from "./ui/AllClearLinks.jsx";
 import { SORTS } from "../lib/filterMatches.js";
-import { formatDuration, plural, shortId } from "../lib/format.js";
+import { formatLength, formatStartUtc, plural, shortId } from "../lib/format.js";
 
 // The matches that pass the filters. Click one to select it.
 // With `checked` (Heatmaps mode only), each row also gets a checkbox for comparing
 // several matches; ticking never changes the clicked selection.
-export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, onSortChange,
+export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, onSortChange, query, onQueryChange,
                             checked = null, onToggleCheck, onCheckAll, onClearChecks }) {
   const checkable = checked !== null;
   const tickedCount = checkable ? matches.filter((m) => checked.has(m.id)).length : 0;
@@ -15,16 +16,15 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
       {checkable && (
         <div className="list-actions">
           <span className="label">{tickedCount === 0 ? "Tick to compare" : `${tickedCount} ticked`}</span>
-          <span className="link-group">
-            {tickedCount < matches.length && (
-              <button type="button" className="link-button" onClick={onCheckAll}>Select all</button>
-            )}
-            {tickedCount > 0 && (
-              <button type="button" className="link-button" onClick={onClearChecks}>Clear</button>
-            )}
-          </span>
+          <AllClearLinks selected={tickedCount} total={matches.length} what="ticked matches"
+                         onAll={onCheckAll} onClear={onClearChecks} />
         </div>
       )}
+      <div className="list-search">
+        <label className="visually-hidden" htmlFor="match-search">Search by match ID</label>
+        <input id="match-search" type="search" placeholder="Search match ID…" value={query}
+               onChange={(e) => onQueryChange(e.target.value)} autoComplete="off" spellCheck="false" />
+      </div>
       <div className="list-head">
         <span className="label">{plural(matches.length, "match", "matches")}</span>
         <label className="sort">
@@ -38,7 +38,11 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
       </div>
 
       {matches.length === 0 ? (
-        <EmptyState title="No matches">Pick at least one day, or try another map.</EmptyState>
+        query ? (
+          <EmptyState title="No match with that ID">Searched every day on this map. Check the map, or the ID.</EmptyState>
+        ) : (
+          <EmptyState title="No matches">Pick at least one day, or try another map.</EmptyState>
+        )
       ) : (
         <ul className="rows">
           {matches.map((m) => (
@@ -60,7 +64,12 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
               >
                 <span className="row-top">
                   <span className="row-id">{shortId(m.id)}</span>
-                  <span className="row-meta">{dateLabels[m.date]} · {formatDuration(m.duration)}</span>
+                  {/* Day · start time (UTC) · match length. Older data has no start time. */}
+                  <span className="row-meta">
+                    {dateLabels[m.date]}
+                    {m.start != null && ` · ${formatStartUtc(m.start)}`}
+                    {` · ${formatLength(m.duration)}`}
+                  </span>
                 </span>
                 <span className="row-stats">
                   <Stat value={m.humans} one="human" many="humans" />

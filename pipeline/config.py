@@ -9,7 +9,7 @@ No logic here, only values the other files use. Anything that might change
 # ---------------------------------------------------------------------------
 # Written into every JSON file. Bump it when the shape of the JSON changes
 # (see DATA_CONTRACT.md), so the website knows which format it is reading.
-DATA_VERSION = 2   # 2: heatmaps stored per match, for 9 metrics
+DATA_VERSION = 3   # 2: heatmaps stored per match, for 9 metrics; 3: traffic = unique players
 
 
 # ---------------------------------------------------------------------------
@@ -53,6 +53,11 @@ DEDUPE_EVENTS = MOVEMENT_EVENTS | DEATH_EVENTS
 # metric id → (taken from bot files?, event types)
 # Combat and loot are recorded in HUMAN files, so the "bots" kill/death metrics
 # are the human side of the same fights (drawn at the player's position).
+# Traffic = how many DIFFERENT players came to each cell (the crowd), not how long they
+# stayed: each player counts once per cell per match. Level designers read "high traffic"
+# as "many players go here"; a camper shouldn't look like a crowd.
+UNIQUE_PLAYER_METRICS = {"traffic_players", "traffic_bots"}
+
 HEAT_METRICS = {
     "traffic_players": (False, {"Position"}),
     "traffic_bots":    (True,  {"BotPosition"}),

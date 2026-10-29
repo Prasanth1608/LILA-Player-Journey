@@ -2,7 +2,7 @@
 // Each file is downloaded once and kept in memory, so switching back to a
 // match, map or mode is instant.
 
-const HEATMAP_VERSION = 2; // per-match heatmaps; older files can't be ticked/compared
+const HEATMAP_VERSION = 3; // 2: per-match heatmaps; 3: traffic counts different players
 
 const cache = new Map(); // path → Promise of parsed JSON
 

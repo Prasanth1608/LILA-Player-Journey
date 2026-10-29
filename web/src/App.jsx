@@ -3,7 +3,7 @@ import { useMatchIndex } from "./hooks/useMatchIndex.js";
 import { filterMatches } from "./lib/filterMatches.js";
 import { plural, shortId } from "./lib/format.js";
 import { toggleInSet } from "./lib/sets.js";
-import { DEFAULT_LAYERS } from "./config/layers.js";
+import { DEFAULT_LAYERS, LAYERS } from "./config/layers.js";
 import { DEFAULT_HEAT_SELECTION } from "./config/heatmapMetrics.js";
 import { PlaybackClock } from "./renderer/PlaybackClock.js";
 import { FilterBar } from "./components/FilterBar.jsx";
@@ -12,6 +12,7 @@ import { ReplayView } from "./components/ReplayView.jsx";
 import { HeatmapView } from "./components/HeatmapView.jsx";
 import { SegmentedControl } from "./components/ui/SegmentedControl.jsx";
 import { EmptyState } from "./components/ui/EmptyState.jsx";
+import { ThemeToggle } from "./components/ui/ThemeToggle.jsx";
 
 const MODES = [
   { value: "replay", label: "Replay" },
@@ -58,6 +59,7 @@ function Explorer({ index }) {
   const [mapId, setMapId] = useState(index.maps[0].id);
   const [selectedDates, setSelectedDates] = useState(() => new Set(index.dates.map((d) => d.id)));
   const [sortBy, setSortBy] = useState("players");
+  const [query, setQuery] = useState("");                  // match ID search
   const [selectedId, setSelectedId] = useState(null);
 
   // ---- Replay settings ----
@@ -75,8 +77,8 @@ function Explorer({ index }) {
     [index.dates]
   );
   const matches = useMemo(
-    () => filterMatches(index.matches, { mapId, dates: selectedDates, sortBy }),
-    [index.matches, mapId, selectedDates, sortBy]
+    () => filterMatches(index.matches, { mapId, dates: selectedDates, sortBy, query }),
+    [index.matches, mapId, selectedDates, sortBy, query]
   );
   const selected = matches.find((m) => m.id === selectedId) ?? null;
 
@@ -108,10 +110,6 @@ function Explorer({ index }) {
     setMapId(id);
     setChecked(new Set()); // ticks belong to one map's comparison
   };
-  const toggleAllDates = () =>
-    setSelectedDates((prev) =>
-      prev.size === index.dates.length ? new Set() : new Set(index.dates.map((d) => d.id))
-    );
 
   const mapImage = index.maps.find((m) => m.id === mapId)?.image;
   const inHeatmaps = mode === "heatmaps";
@@ -127,7 +125,8 @@ function Explorer({ index }) {
             selectedDates={selectedDates}
             onMapChange={changeMap}
             onToggleDate={(id) => setSelectedDates((prev) => toggleInSet(prev, id))}
-            onAllDates={toggleAllDates}
+            onAllDates={() => setSelectedDates(new Set(index.dates.map((d) => d.id)))}
+            onClearDates={() => setSelectedDates(new Set())}
           />
           <MatchList
             matches={matches}
@@ -136,6 +135,8 @@ function Explorer({ index }) {
             onSelect={setSelectedId}
             sortBy={sortBy}
             onSortChange={setSortBy}
+            query={query}
+            onQueryChange={setQuery}
             checked={inHeatmaps ? checked : null}
             onToggleCheck={(id) => setChecked((prev) => toggleInSet(prev, id))}
             onCheckAll={() => setChecked(new Set(matches.map((m) => m.id)))}
@@ -160,6 +161,8 @@ function Explorer({ index }) {
             dateLabel={selected ? dateLabels[selected.date] : ""}
             layers={layers}
             onToggleLayer={(id) => setLayers((prev) => toggleInSet(prev, id))}
+            onAllLayers={() => setLayers(new Set(LAYERS.map((l) => l.id)))}
+            onClearLayers={() => setLayers(new Set())}
             trail={trail}
             onTrailChange={setTrail}
             clock={clock}
@@ -178,7 +181,10 @@ function Shell({ children, actions = null }) {
           <h1>LILA Player Journeys</h1>
           <span className="subtitle">Where players move, fight, loot and die</span>
         </div>
-        {actions && <div className="topbar-actions">{actions}</div>}
+        <div className="topbar-actions">
+          {actions}
+          <ThemeToggle />
+        </div>
       </header>
       {children}
     </div>

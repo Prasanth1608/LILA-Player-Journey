@@ -30,9 +30,12 @@ export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label 
   }, [match, layers, trailSeconds]);
 
   return (
-    <div className="map-wrap">
-      <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label} />
-      <ZoomControls {...zoom} />
+    // map-area: the space available; map-wrap: the square map itself (canvas + overlays)
+    <div className="map-area">
+      <div className="map-wrap">
+        <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label} />
+        <ZoomControls {...zoom} />
+      </div>
     </div>
   );
 }

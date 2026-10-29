@@ -96,9 +96,19 @@ def test_heatmap_metrics_follow_the_layer_rules():
     df = add_uv(add_time(tag_bots(df)))
     heat = dict(build_heatmaps(df))["AmbroseValley"]["matches"]["m1"]
     total = {k: sum(v[1::2]) for k, v in heat.items()}
-    assert total == {"traffic_players": 2, "traffic_bots": 1, "kills_players": 1,
+    assert total == {"traffic_players": 1, "traffic_bots": 1, "kills_players": 1,   # traffic = players, not samples
                      "deaths_bots": 1, "kills_bots": 1, "deaths_players": 1, "loot_players": 1}
 
 
 def test_short_match_id_drops_server_suffix():
     assert short_match_id("b71aaad8-aa62.nakama-0") == "b71aaad8-aa62"
+
+
+def test_traffic_counts_different_players_not_time_spent():
+    camper = rows("Position", "Position", "Position", user="h1")    # one player, 3 samples, same spot
+    passer = rows("Position", user="h2")                            # another player, same spot
+    df = pd.concat([camper, passer], ignore_index=True)
+    df["date"] = "February_10"
+    df = add_uv(add_time(tag_bots(df)))
+    traffic = dict(build_heatmaps(df))["AmbroseValley"]["matches"]["m1"]["traffic_players"]
+    assert traffic[1::2] == [2]                                     # 2 players in that cell, not 4 samples

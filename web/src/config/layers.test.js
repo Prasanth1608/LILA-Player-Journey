@@ -37,10 +37,8 @@ describe("map layers", () => {
   it("returns 0 with no match selected", () => {
     expect(countLayer(null, LAYERS[0])).toBe(0);
   });
-  it("starts with the bot kill/death layers off (they repeat player markers)", () => {
-    expect(DEFAULT_LAYERS.has("botKills")).toBe(false);
-    expect(DEFAULT_LAYERS.has("botDeaths")).toBe(false);
-    expect(DEFAULT_LAYERS.has("playerPaths")).toBe(true);
+  it("starts with every layer on (designers see everything, then switch off)", () => {
+    expect(DEFAULT_LAYERS.size).toBe(LAYERS.length);
   });
   it("has 9 layers with unique ids", () => {
     expect(new Set(LAYERS.map((l) => l.id)).size).toBe(9);

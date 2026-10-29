@@ -30,7 +30,7 @@ export const LAYERS = [
   },
   {
     // A bot killing a player is logged in the player's file, at the player's position.
-    id: "botKills", group: "Kills", side: "bots", kind: "marker", z: 3, defaultOn: false,
+    id: "botKills", group: "Kills", side: "bots", kind: "marker", z: 3, defaultOn: true,
     color: COLORS.bots, shape: SHAPES.kill,
     note: "Shown where the player died (same events as player deaths by bots)",
     events: (e) => !e.bot && isType(e, "BotKilled"),
@@ -42,19 +42,19 @@ export const LAYERS = [
   },
   {
     // A player killing a bot is logged in the player's file, at the player's position.
-    id: "botDeaths", group: "Deaths", side: "bots", kind: "marker", z: 4, defaultOn: false,
+    id: "botDeaths", group: "Deaths", side: "bots", kind: "marker", z: 4, defaultOn: true,
     color: COLORS.bots, shape: SHAPES.death,
     note: "Shown where the player stood when killing the bot (same events as player kills of bots)",
     events: (e) => !e.bot && isType(e, "BotKill"),
   },
   {
     id: "stormPlayers", group: "Storm deaths", side: "players", kind: "marker", z: 5, defaultOn: true,
-    color: COLORS.storm, outlineColor: COLORS.players, shape: SHAPES.storm,
+    color: COLORS.players, shape: SHAPES.storm,
     events: (e) => !e.bot && isType(e, "KilledByStorm"),
   },
   {
     id: "stormBots", group: "Storm deaths", side: "bots", kind: "marker", z: 5, defaultOn: true,
-    color: COLORS.storm, outlineColor: COLORS.bots, shape: SHAPES.storm,
+    color: COLORS.bots, shape: SHAPES.storm,
     events: (e) => e.bot && isType(e, "KilledByStorm"),
   },
 ];

@@ -10,7 +10,8 @@ import { StageHead } from "./ui/StageHead.jsx";
 // Replay mode: one match's paths, markers and playback. Loads only that match's file;
 // never touches heatmap data. Settings (layers, trail, clock) live in App so they
 // survive switching modes.
-export function ReplayView({ mapId, mapImage, selected, dateLabel, layers, onToggleLayer, trail, onTrailChange, clock }) {
+export function ReplayView({ mapId, mapImage, selected, dateLabel, layers, onToggleLayer, onAllLayers, onClearLayers,
+                            trail, onTrailChange, clock }) {
   const { match, loading, error } = useMatch(selected?.id ?? null);
 
   // A newly opened match starts paused on its end state (everything visible)
@@ -41,7 +42,7 @@ export function ReplayView({ mapId, mapImage, selected, dateLabel, layers, onTog
           <Timeline clock={clock} match={match} layers={layers} trail={trail} onTrailChange={onTrailChange} />
         </div>
         <div className="side-panels">
-          <LayerPanel match={match} enabled={layers} onToggle={onToggleLayer} />
+          <LayerPanel match={match} enabled={layers} onToggle={onToggleLayer} onAll={onAllLayers} onClear={onClearLayers} />
         </div>
       </div>
     </main>

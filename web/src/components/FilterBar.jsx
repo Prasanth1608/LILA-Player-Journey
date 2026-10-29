@@ -1,12 +1,11 @@
 import { SegmentedControl } from "./ui/SegmentedControl.jsx";
 import { ToggleChip } from "./ui/ToggleChip.jsx";
+import { AllClearLinks } from "./ui/AllClearLinks.jsx";
 import { mapLabel } from "../lib/format.js";
 
 // Map (pick one) and days (pick any). Everything comes from index.json,
 // so new maps or days appear here without code changes.
-export function FilterBar({ maps, dates, mapId, selectedDates, onMapChange, onToggleDate, onAllDates }) {
-  const allOn = selectedDates.size === dates.length;
-
+export function FilterBar({ maps, dates, mapId, selectedDates, onMapChange, onToggleDate, onAllDates, onClearDates }) {
   return (
     <section className="filters" aria-label="Filters">
       <div className="field-group">
@@ -22,9 +21,8 @@ export function FilterBar({ maps, dates, mapId, selectedDates, onMapChange, onTo
       <div className="field-group">
         <div className="label-row">
           <span className="label">Days</span>
-          <button type="button" className="link-button" onClick={onAllDates}>
-            {allOn ? "Clear" : "All days"}
-          </button>
+          <AllClearLinks selected={selectedDates.size} total={dates.length} allLabel="All days" what="days"
+                         onAll={onAllDates} onClear={onClearDates} />
         </div>
         <div className="chips">
           {dates.map((d) => (

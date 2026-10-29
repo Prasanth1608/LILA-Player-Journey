@@ -3,7 +3,7 @@
 // Metric ids match the pipeline's HEAT_METRICS (pipeline/config.py, DATA_CONTRACT.md).
 export const HEAT_GROUPS = [
   {
-    id: "traffic", label: "Traffic", one: "position sample", many: "position samples",
+    id: "traffic", label: "Traffic", one: "visitor", many: "visitors",   // different players who came here
     metrics: { players: "traffic_players", bots: "traffic_bots" },
   },
   {
@@ -32,7 +32,7 @@ export const HEAT_SIDES = [
   { id: "both", label: "Both" },
 ];
 
-export const DEFAULT_HEAT_SELECTION = { group: "traffic", side: "players" };
+export const DEFAULT_HEAT_SELECTION = { group: "traffic", side: "both" }; // all movement, players + bots
 
 export const groupById = Object.fromEntries(HEAT_GROUPS.map((g) => [g.id, g]));
 

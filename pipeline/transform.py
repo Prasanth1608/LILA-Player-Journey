@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 
 from config import (DATA_VERSION, DEATH_EVENTS, HEAT_METRICS, HEATMAP_GRID, KILL_EVENTS,
-                    LOOT_EVENTS, MAPS, MOVEMENT_EVENTS, PARTIAL_DATES, UV_DECIMALS)
+                    LOOT_EVENTS, MAPS, MOVEMENT_EVENTS, PARTIAL_DATES, UNIQUE_PLAYER_METRICS,
+                    UV_DECIMALS)
 
 # Combat and loot markers come from human files only: in bot files their meaning
 # is undocumented and they don't mirror human events (parked, see ARCHITECTURE.md).
@@ -79,6 +80,7 @@ def build_index(df: pd.DataFrame, events: pd.DataFrame) -> dict:
         "map": g["map_id"].first(),
         "date": g["date"].first(),
         "duration": g["t"].max(),                 # last event time = match length in seconds
+        "start": g["time_utc"].min(),             # first event = when the match started (UTC)
         "humans": players.get(False, 0),
         "bots": players.get(True, 0),
         "kills": count(KILL_EVENTS),
@@ -91,6 +93,7 @@ def build_index(df: pd.DataFrame, events: pd.DataFrame) -> dict:
     matches = [{
         "id": short_match_id(mid),
         "map": r["map"], "date": r["date"], "duration": int(r["duration"]),
+        "start": int(r["start"].timestamp()),     # Unix seconds, for newest/oldest sorting
         "humans": int(r["humans"]), "bots": int(r["bots"]),
         "counts": {k: int(r[k]) for k in ("kills", "deaths", "loot", "storm")},
     } for mid, r in summary.sort_values(["date", "map"]).iterrows()]
@@ -162,8 +165,11 @@ def build_heatmaps(df: pd.DataFrame):
     parts = []
     for metric, (from_bot_files, types) in HEAT_METRICS.items():
         rows = (on_map["is_bot"] == from_bot_files) & on_map["event"].isin(types)
-        parts.append(pd.DataFrame({"map": on_map.loc[rows, "map_id"], "match": on_map.loc[rows, "match_id"],
-                                   "metric": metric, "cell": cell[rows]}))
+        part = pd.DataFrame({"map": on_map.loc[rows, "map_id"], "match": on_map.loc[rows, "match_id"],
+                             "metric": metric, "cell": cell[rows], "player": on_map.loc[rows, "user_id"]})
+        if metric in UNIQUE_PLAYER_METRICS:   # count each player once per cell per match
+            part = part.drop_duplicates(["match", "cell", "player"])
+        parts.append(part)
     counts = pd.concat(parts).groupby(["map", "match", "metric", "cell"]).size()
 
     # Nest as {map: {match: {metric: [cell, count, ...]}}}

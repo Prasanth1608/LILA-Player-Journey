@@ -1,5 +1,5 @@
 import { HEAT_GROUPS, HEAT_SIDES, sideAvailable } from "../config/heatmapMetrics.js";
-import { rampCss } from "../renderer/colormaps.js";
+import { HEATMAP } from "../theme/visual.js";
 
 // Pick ONE metric (row) for Players, Bots or Both (column). Works like radio buttons.
 // totals: counts per pipeline metric across the shown matches (null before data loads).
@@ -44,9 +44,16 @@ export function HeatmapPanel({ selection, totals, onSelect }) {
       </table>
 
       <div className="heat-legend">
-        <div className="heat-bar" style={{ background: rampCss() }} aria-hidden="true" />
-        <div className="heat-scale"><span>fewer</span><span>more</span></div>
-        <p className="heat-note">Hover the map for exact counts.</p>
+        <div className="heat-levels">
+          {HEATMAP.levels.map(({ name, rgb, fill }) => (
+            <span key={name} className="heat-level">
+              <span className="heat-level-chip" aria-hidden="true"
+                    style={{ borderColor: `rgb(${rgb})`, background: `rgba(${rgb}, ${fill[1]})` }} />
+              {name}
+            </span>
+          ))}
+        </div>
+        <p className="heat-note">Levels compare to the busiest spot shown. Hover the map for exact counts.</p>
       </div>
     </section>
   );

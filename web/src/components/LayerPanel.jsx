@@ -1,5 +1,6 @@
 import { LAYERS, LAYER_GROUPS, countLayer } from "../config/layers.js";
 import { Swatch } from "./ui/Swatch.jsx";
+import { AllClearLinks } from "./ui/AllClearLinks.jsx";
 
 const SIDES = [
   { id: "players", label: "Players" },
@@ -8,8 +9,13 @@ const SIDES = [
 
 // Players / Bots grid of on-off switches. Any combination can be on at once.
 // Each switch shows its map symbol (doubles as the legend) and how many it would draw.
-export function LayerPanel({ match, enabled, onToggle }) {
+export function LayerPanel({ match, enabled, onToggle, onAll, onClear }) {
   return (
+    <section className="layer-panel" aria-label="Map layers">
+    <div className="label-row">
+      <span className="label">Show</span>
+      <AllClearLinks selected={enabled.size} total={LAYERS.length} what="layers" onAll={onAll} onClear={onClear} />
+    </div>
     <table className="layers" aria-label="Map layers">
       <thead>
         <tr>
@@ -38,6 +44,7 @@ export function LayerPanel({ match, enabled, onToggle }) {
         ))}
       </tbody>
     </table>
+    </section>
   );
 }
 
@@ -53,7 +60,7 @@ function LayerToggle({ layer, count, on, onToggle, sideLabel }) {
       data-empty={empty || undefined}
       onClick={onToggle}
     >
-      <Swatch kind={layer.kind} shape={layer.shape} color={layer.color} outlineColor={layer.outlineColor} />
+      <Swatch kind={layer.kind} shape={layer.shape} color={layer.color} />
       <span className="layer-count">{count}</span>
     </button>
   );

@@ -10,14 +10,14 @@ Times are **seconds since the match started** (`t`).
 ## `index.json` — loaded when the page opens
 ```json
 {
-  "version": 2,
+  "version": 3,
   "maps":  [{ "id": "AmbroseValley", "image": "/minimaps/AmbroseValley.jpg" }],
   "dates": [{ "id": "February_14", "label": "Feb 14", "partial": true }],
   "matches": [{
     "id": "fbbc5d02-dd79-42fb-bba5-d768023891c8",
     "map": "AmbroseValley",
     "date": "February_10",
-    "duration": 512,
+    "duration": 512, "start": 1739176320,
     "humans": 2, "bots": 14,
     "counts": { "kills": 12, "deaths": 1, "loot": 30, "storm": 0 }
   }]
@@ -27,7 +27,7 @@ Times are **seconds since the match started** (`t`).
 ## `matches/<id>.json` — loaded when a match is selected
 ```json
 {
-  "version": 2,
+  "version": 3,
   "id": "fbbc5d02-…", "map": "AmbroseValley", "date": "February_10", "duration": 512,
   "players": [
     { "id": "f4e072fa-…", "bot": false, "path": [[0, 0.0762, 0.1305], [5, 0.0790, 0.1350]] }
@@ -44,7 +44,7 @@ Times are **seconds since the match started** (`t`).
 ## `heatmaps/<map>.json` — loaded when Heatmaps mode opens a map
 ```json
 {
-  "version": 2, "map": "AmbroseValley", "grid": 64,
+  "version": 3, "map": "AmbroseValley", "grid": 64,
   "metrics": ["traffic_players", "traffic_bots", "kills_players", "kills_bots", "deaths_players",
               "deaths_bots", "storm_players", "storm_bots", "loot_players"],
   "matches": {
@@ -59,7 +59,7 @@ Times are **seconds since the match started** (`t`).
 
 | Metric | Rows |
 |---|---|
-| traffic_players / traffic_bots | Position (human files) / BotPosition (bot files) |
+| traffic_players / traffic_bots | Position (human files) / BotPosition (bot files); counts **different players** per cell (each player once per cell per match), not samples |
 | kills_players | Kill + BotKill (human files) |
 | kills_bots | BotKilled (human files): a bot killed a player, at the player's position |
 | deaths_players | Killed + BotKilled (human files) |
@@ -68,3 +68,5 @@ Times are **seconds since the match started** (`t`).
 | loot_players | Loot (human files) |
 
 In `index.json`, match `counts` are human-only. A bot's storm death still appears as a marker in its match file, with `"bot": true`.
+
+**`start`** (index matches): Unix seconds (UTC) of the match's first recorded event. Used to sort newest/oldest. Added after version 2; the web app still works without it (falls back to day order).

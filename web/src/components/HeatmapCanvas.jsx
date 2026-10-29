@@ -59,15 +59,18 @@ export function HeatmapCanvas({ imageSrc, heat, grid, readout, label }) {
   };
 
   return (
-    <div className="map-wrap">
-      <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label}
-              onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} />
-      <ZoomControls {...zoom} />
-      {hover && (
-        <div className="heat-tooltip" style={{ left: hover.x, top: hover.y }} role="tooltip">
-          {hover.lines.map((line) => <div key={line}>{line}</div>)}
-        </div>
-      )}
+    // map-area: the space available; map-wrap: the square map itself (canvas + overlays)
+    <div className="map-area">
+      <div className="map-wrap">
+        <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label}
+                onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} />
+        <ZoomControls {...zoom} />
+        {hover && (
+          <div className="heat-tooltip" style={{ left: hover.x, top: hover.y }} role="tooltip">
+            {hover.lines.map((line) => <div key={line}>{line}</div>)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
