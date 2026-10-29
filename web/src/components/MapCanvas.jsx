@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Renderer } from "../renderer/Renderer.js";
+import { useMapZoom } from "../hooks/useMapZoom.js";
+import { ZoomControls } from "./ui/ZoomControls.jsx";
 
 // Replay canvas: mounts the Replay renderer and hands it what to draw.
 // React only says WHAT to show; the Renderer handles HOW (and redraws on every clock tick).
@@ -13,6 +15,7 @@ export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label 
     rendererRef.current = renderer;
     return () => renderer.destroy();
   }, []);
+  const zoom = useMapZoom(rendererRef); // after the renderer exists
 
   useEffect(() => {
     rendererRef.current.setClock(clock);
@@ -26,5 +29,10 @@ export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label 
     rendererRef.current.setScene(match, layers, trailSeconds);
   }, [match, layers, trailSeconds]);
 
-  return <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label} />;
+  return (
+    <div className="map-wrap">
+      <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label} />
+      <ZoomControls {...zoom} />
+    </div>
+  );
 }

@@ -57,3 +57,11 @@ export const PATH = {
   minMovePx: 6,         // ignore tiny moves (standing still, looting) when placing arrows
   endpointRadius: 4,    // start ● and end ■ markers
 };
+
+// Map zoom: limits and step sizes (shared by Replay and Heatmaps)
+export const ZOOM = {
+  min: 1,             // whole map fits the canvas; can't zoom out further
+  max: 8,             // clamp: closer than this the 2048px minimap just gets blurry
+  buttonStep: 1.5,    // each +/− click
+  wheelSpeed: 0.0015, // mouse wheel / trackpad sensitivity
+};

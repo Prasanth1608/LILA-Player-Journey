@@ -68,6 +68,7 @@ export function buildHeatmapImage(counts, max, grid, width, height) {
   return canvas;
 }
 
+// Drawn over the map's current (zoomed/panned) position
 export function drawHeatmap(ctx, view, image) {
-  ctx.drawImage(image, 0, 0, view.width, view.height);
+  ctx.drawImage(image, view.x, view.y, view.mapW, view.mapH);
 }
