@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import { Renderer } from "../renderer/Renderer.js";
 
 // Mounts the canvas renderer and hands it what to draw.
-// React only says WHAT to show; the Renderer handles HOW.
-export function MapCanvas({ imageSrc, match, layers, label }) {
+// React only says WHAT to show; the Renderer handles HOW (and redraws on every clock tick).
+export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
 
@@ -15,12 +15,16 @@ export function MapCanvas({ imageSrc, match, layers, label }) {
   }, []);
 
   useEffect(() => {
+    rendererRef.current.setClock(clock);
+  }, [clock]);
+
+  useEffect(() => {
     rendererRef.current.setImage(imageSrc);
   }, [imageSrc]);
 
   useEffect(() => {
-    rendererRef.current.setScene(match, layers);
-  }, [match, layers]);
+    rendererRef.current.setScene(match, layers, trailSeconds);
+  }, [match, layers, trailSeconds]);
 
   return <canvas ref={canvasRef} className="map-canvas" role="img" aria-label={label} />;
 }

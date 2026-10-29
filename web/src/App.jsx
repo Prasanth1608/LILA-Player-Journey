@@ -4,10 +4,13 @@ import { useMatch } from "./hooks/useMatch.js";
 import { filterMatches } from "./lib/filterMatches.js";
 import { mapLabel, matchSummary } from "./lib/format.js";
 import { DEFAULT_LAYERS } from "./config/layers.js";
+import { PLAYBACK } from "./theme/visual.js";
+import { PlaybackClock } from "./renderer/PlaybackClock.js";
 import { FilterBar } from "./components/FilterBar.jsx";
 import { MatchList } from "./components/MatchList.jsx";
 import { LayerPanel } from "./components/LayerPanel.jsx";
 import { MapCanvas } from "./components/MapCanvas.jsx";
+import { Timeline } from "./components/Timeline.jsx";
 import { EmptyState } from "./components/ui/EmptyState.jsx";
 
 export default function App() {
@@ -49,8 +52,15 @@ function Explorer({ index }) {
   const [sortBy, setSortBy] = useState("players");
   const [selectedId, setSelectedId] = useState(null);
   const [layers, setLayers] = useState(DEFAULT_LAYERS);   // which map layers are switched on
+  const [trail, setTrail] = useState("full");              // "full" path so far, or "recent" only
+  const [clock] = useState(() => new PlaybackClock());     // one clock for the whole session
 
   const { match, loading, error: matchError } = useMatch(selectedId);
+
+  // A newly opened match starts paused on its end state (everything visible)
+  useEffect(() => {
+    clock.load(match?.duration ?? 0);
+  }, [clock, match]);
 
   // ---- Derived data (recomputed only when its inputs change) ----
   const dateLabels = useMemo(
@@ -124,12 +134,17 @@ function Explorer({ index }) {
             <span className="stage-meta" role="status">{status}</span>
           </div>
           <div className="stage-body">
-            <MapCanvas
-              imageSrc={mapImage}
-              match={match}
-              layers={layers}
-              label={`${mapLabel(mapId)} minimap${selected ? `, ${matchSummary(selected, dateLabels[selected.date])}` : ""}`}
-            />
+            <div className="map-column">
+              <MapCanvas
+                imageSrc={mapImage}
+                match={match}
+                layers={layers}
+                trailSeconds={trail === "recent" ? PLAYBACK.trailSeconds : null}
+                clock={clock}
+                label={`${mapLabel(mapId)} minimap${selected ? `, ${matchSummary(selected, dateLabels[selected.date])}` : ""}`}
+              />
+              <Timeline clock={clock} match={match} layers={layers} trail={trail} onTrailChange={setTrail} />
+            </div>
             <LayerPanel match={match} enabled={layers} onToggle={toggleLayer} />
           </div>
         </main>

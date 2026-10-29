@@ -24,7 +24,7 @@ describe("format", () => {
   });
   it("summarises a match", () => {
     const m = match("fbbc5d02-dd79", "AmbroseValley", "February_10", { duration: 512, humans: 2, bots: 14 });
-    expect(matchSummary(m, "Feb 10")).toBe("Match fbbc5d02 · Feb 10 · 8:32 · 2 humans, 14 bots");
+    expect(matchSummary(m, "Feb 10")).toBe("Match fbbc5d02 · Feb 10 · 8:32 · 2 humans, 14 bot paths");
   });
 });
 

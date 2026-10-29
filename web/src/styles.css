@@ -143,6 +143,27 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
   .stage-body { grid-template-columns: 1fr; }
 }
 
+.map-column { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* ---------- Timeline ---------- */
+.timeline {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+}
+.play {
+  width: 34px; height: 34px; flex: none; border-radius: 50%; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); border: 0; font-size: 13px;
+}
+.play:disabled { background: var(--line); color: var(--faint); cursor: default; }
+.track { position: relative; flex: 1 1 220px; min-width: 160px; display: flex; align-items: center; }
+.track input[type="range"] { width: 100%; accent-color: var(--accent); position: relative; }
+.ticks { position: absolute; left: 7px; right: 7px; top: 50%; height: 14px; transform: translateY(-50%); pointer-events: none; }
+.tick { position: absolute; top: 0; width: 2px; height: 100%; border-radius: 1px; opacity: 0.75; transform: translateX(-1px); }
+.clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; min-width: 92px; }
+.mini-field select {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-size: 12px;
+}
+
 .map-canvas {
   display: block; width: 100%; height: auto;
   aspect-ratio: 1 / 1;               /* replaced by the image's own shape once it loads */

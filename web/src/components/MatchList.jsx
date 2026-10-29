@@ -36,7 +36,9 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
                 </span>
                 <span className="row-stats">
                   <Stat value={m.humans} one="human" many="humans" />
-                  <Stat value={m.bots} one="bot" many="bots" />
+                  {/* Bots whose own movement was recorded. Most matches have none,
+                      even when the player killed bots (those come from the player's file). */}
+                  <Stat value={m.bots} one="bot path" many="bot paths" />
                   <Stat value={m.counts.kills} one="kill" many="kills" />
                   <Stat value={m.counts.deaths} one="death" many="deaths" />
                   <Stat value={m.counts.loot} one="loot" many="loot" />

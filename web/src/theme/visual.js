@@ -22,6 +22,14 @@ export const MARKER = {
   outlineWidth: 1.5,
 };
 
+export const PLAYBACK = {
+  speeds: [5, 10, 20, 40],     // × real time (matches are 5–15 minutes long)
+  defaultSpeed: 10,
+  trailSeconds: 30,            // "Last 30 s" trail mode
+  pulseRealSeconds: 0.8,       // how long a new event's ring is visible, in real seconds
+  headRadius: 5.5,             // the moving dot for each player
+};
+
 export const PATH = {
   width: 1.6,           // line thickness in CSS pixels
   alpha: 0.85,
