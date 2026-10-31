@@ -2,7 +2,7 @@
 
 Explore where players move, fight, loot, and die across **LILA: Black** matches. Built specifically for level designers, this web app turns game telemetry into clear, interactive visualisations so you can inspect player behaviour quickly and easily.
 
-**Live demo:** [https://lila-player-journey-nine.vercel.app/](https://lila-player-journey-nine.vercel.app/) · No account, setup, or environment variables required.
+**Live demo:** [https://lila-player-journey-nine.vercel.app/](https://lila-player-journey-nine.vercel.app/)
 
 <!-- Replace these paths with the final screenshots in the repository. -->
 ![Replay view](docs/images/replay.png)

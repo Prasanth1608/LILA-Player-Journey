@@ -1,147 +1,158 @@
-# LILA Player Journeys — Insights
+# LILA Player Journeys --- Insights
 
-This document outlines three gameplay and level-design insights to investigate using the telemetry visualisations.
+This document separates quantified findings from further investigations.
+The latter are not presented as confirmed results until validated in the
+dashboard.
 
-> **Validation note:** These are hypotheses from the submission guide, not confirmed findings. Validate each one in the live tool using the real dataset. Record the observed values, keep only insights supported by the data, and remove or replace anything that is not confirmed.
+## Insight 1 --- Recorded player combat is overwhelmingly bot-focused
 
-## Insight A — Are matches mostly solo players against bots?
+### Evidence
 
-**What to investigate**
+The dataset contains 796 matches.
 
-Check the match list and identify how many matches contain only one human player. Then, in Heatmaps, select all matches and compare player kills with kills on bots.
+  Match-level observation              Matches   Percentage
+  ---------------------------------- --------- ------------
+  Exactly 1 human participant file         794       99.75%
+  2 human participant files                  2        0.25%
+  No bot participant files                 744       93.47%
+  Bot participant files present             52        6.53%
 
-**How to check**
+Recorded player kill events:
 
-1. In the match list, inspect the human-player count for each match.
-2. In Heatmaps, select all matches.
-3. Compare `Kills · Players` with bot kills represented by `Deaths · Bots`.
-4. Check whether player-versus-player kills are relatively uncommon.
+  Kill type                        Unique events   Percentage
+  ------------------------------ --------------- ------------
+  Player killed a bot                      2,204       99.86%
+  Player killed another player                 3        0.14%
+  **Total**                            **2,207**     **100%**
 
-**Evidence to record**
+Match percentages use 796 matches; kill-event percentages use 2,207
+unique recorded player kill events.
 
-- Percentage of matches containing exactly one human player.
-- Number of player kills attributed to bots, out of the total player kills.
+### Key finding
 
-Use the observed values to complete:
+2,204 of 2,207 recorded player kill events were against bots. The
+available kill telemetry therefore indicates that recorded player combat
+is overwhelmingly bot-focused.
 
-> **[X]% of matches have 1 human; [Y] of [Z] player kills were bots.**
+### Why a designer should care
 
-**Potential design action**
+If the intended experience is competitive PvP, this warrants
+investigation. A high proportion of bot encounters may affect perceived
+challenge, match variety, and player expectations. It may also be
+intentional for the mode or dataset, so this is a signal to investigate
+rather than proof that the balance is wrong.
 
-If the data confirms that most encounters are against bots, bot placement and difficulty may shape the experience more than PvP balance. Review bot spawn locations and density.
+### Potential design action
 
-**Metrics to investigate**
+Review bot population and matchmaking composition against the intended
+experience. Compare the pattern across modes, maps, and match phases
+before changing bot density or matchmaking rules.
 
-- Kills per match
-- Time to first fight
-- Deaths to bots
+### Metrics affected
 
-**Why level designers should care**
+-   Player kills against bots
+-   Player kills against other players
+-   Bot presence by match
+-   Human participant-file counts
 
-The placement of bots influences where fights happen and therefore helps determine the pacing of a match.
+### Data limitations
 
----
+Participant files are only a partial sample of match participants. One
+human participant file does not prove that a match contained only one
+human player; absence of bot participant files does not prove that no
+bots were present. Kill-event totals describe recorded events in the
+available dataset, not necessarily every kill that occurred.
 
-## Insight B — Where are the hotspots and dead zones?
+**Takeaway:** Recorded kill events are heavily bot-focused, but the
+participant-file data is not sufficient to establish the full
+human-versus-bot composition of every match.
 
-**What to investigate**
+------------------------------------------------------------------------
 
-Identify areas that receive frequent player visits and large areas that receive little or no traffic.
+## Insight 2 --- AmbroseValley's centre is disproportionately associated with combat
 
-**How to check**
+### Evidence
 
-1. Open Heatmaps.
-2. Select `Traffic` and `Both`.
-3. Select all matches for each map.
-4. Identify two or three prominent hotspots and name the locations using the sectors they fall within.
-5. Identify large regions with little or no recorded traffic.
+Scope: all 566 available AmbroseValley matches, aggregated across the
+included dates. The comparison uses the same central region for each
+metric: a 20 × 20-cell area on the 64 × 64 heatmap grid (400 of 4,096
+cells, or 9.77% of the map).
 
-**Evidence to record**
+  Heatmap metric                        Total across map   Central region   Share in centre
+  ----------------------------------- ------------------ ---------------- -----------------
+  Combat (player kills + bot kills)                1,971            1,026         **52.0%**
+  Loot                                             9,936            3,492         **35.1%**
+  Player traffic                                  22,456            7,003         **31.2%**
 
-For each map, record the number of different players who visited a notable hotspot and compare it with a low-traffic region.
+The central region accounts for 52.0% of recorded combat despite
+covering only 9.77% of the map. Its combat share is 16.9 percentage
+points higher than its loot share and 20.8 points higher than its
+traffic share.
 
-Use the observed values to complete:
+### Key finding
 
-> **[Area] was visited by [N] different players; [region] by almost none ([n]).**
+Combat is more concentrated in AmbroseValley's central region than
+either loot activity or player traffic. The centre appears to be a
+significant engagement area beyond what general movement and loot
+activity alone would suggest.
 
-**Potential design action**
+### Why a level designer should care
 
-- Consider moving loot or objectives into underused areas, or reducing those areas.
-- Consider adding cover or alternative routes around overcrowded areas.
+This identifies a repeat engagement hotspot worth inspecting. Layout,
+sightlines, cover, choke points, rotation routes, and strategic position
+may contribute to the concentration. Understanding the cause helps
+determine whether the hotspot creates desirable encounters or an
+unintended imbalance.
 
-**Metrics to investigate**
+### Potential design action
 
-- Map coverage
-- Traffic spread
-- Loot pickups per area
+Inspect the central region before making changes. Review sightlines,
+cover, approach routes, and nearby loot distribution. Preserve the
+hotspot if it supports intended gameplay; consider adjustments only if
+it creates repetitive or unfair encounters.
 
-**Why level designers should care**
+### Metrics affected
 
-Unused space may represent level-design effort that players rarely experience. Overcrowded areas can also make matches feel repetitive if players repeatedly follow the same routes.
+-   Combat distribution (player kills + bot kills)
+-   Player traffic distribution
+-   Loot distribution
 
-**Traffic definition**
+### Calculation notes and limitations
 
-Traffic represents the number of different players who visited an area, not how long they stayed there. A player is counted once per cell per match.
+Combat counts player kills plus bot kills; deaths are not added,
+avoiding double-counting the same engagements. Traffic represents
+distinct players visiting each cell: a player is counted once per cell
+per match. It does not measure time spent in an area. The figures
+aggregate available matches and dates; the dataset's final day is marked
+as partial.
 
----
+**Takeaway:** A small central portion of AmbroseValley contains a
+disproportionately large share of recorded combat. It is a strong
+candidate for focused level-design review, not automatic redesign.
 
-## Insight C — Where do players loot, fight, and die?
+------------------------------------------------------------------------
 
-**What to investigate**
+### Insight 3 --- Recorded loot events closely align with human player movement
 
-Compare loot locations with player deaths and kills to understand the relationship between reward and risk. Determine whether valuable loot areas are also dangerous, or whether players can collect loot with little risk.
+### Evidence
 
-**How to check**
+### Scope: all 566 available AmbroseValley matches.
+- 9,936 recorded Loot events were found across 539 matches.
+- Every recorded Loot event was tagged bot: false and included a player ID, timestamp (t), and map position (u, v).
+- Every event's player ID matched a player record with a timestamped movement path.
+- For each loot event, the closest movement-path sample for that same player was identified:
+  - 9,528 of 9,936 events (95.9%) had a path sample within 5 seconds of the event timestamp.
+  - The median positional distance between the loot event and its nearest path sample was approximately 0.00108 normalized map units (about 0.07 cells on the 64 × 64 grid).
 
-1. Open Heatmaps and use the same map and match selection for each comparison.
-2. Compare `Loot · Players` with `Deaths · Players`.
-3. Compare those locations with `Kills` to understand where combat occurs.
-4. As an alternative, inspect storm deaths and determine whether they cluster in particular areas, such as the far edges of the map.
+### Key finding
+The recorded loot events are strongly associated with human players' movement in both time and location. This supports treating the Loot layer as a useful indicator of where players are interacting with loot, rather than interpreting it as bot activity or loot-spawn locations.
 
-**Evidence to record**
+### Why a level designer should care
+This helps distinguish places players merely pass through from places where recorded loot interactions occur. Comparing these events with traffic, combat, and deaths can help designers investigate whether loot locations sit along common routes, draw players into particular areas, or expose them to nearby danger.
+Potential design action
+Use the loot-event positions alongside player paths and nearby combat/death events to inspect specific locations. Look for loot interactions that occur along established routes versus locations that appear to pull players away from those routes. Review the local cover, approach options, and nearby threats before changing loot placement.
 
-Record loot pickups and deaths for notable areas, or record the total number and distribution of storm deaths.
+### Calculation notes and limitations
+The comparison matched each Loot event to the movement path of the player ID recorded on that event, then found that player's nearest path sample by timestamp. Movement paths are sampled at intervals, so the nearest sample is not necessarily exactly at the event time. The 5-second result means a path sample exists within that time window; it does not prove the player crossed a location first and looted exactly one second later. The positional comparison is also not proof of item collection success unless the source's Loot event definition confirms that semantic. The data supports a close time-and-location association, not a causal claim that loot attracted the player.
 
-Use the observed values to complete one of these:
-
-> **[Area] has [N] loot pickups but only [n] deaths.**
-
-or
-
-> **Storm deaths: [N] total, mostly in [sector].**
-
-**Potential design action**
-
-- If an area has high loot and low risk, consider increasing the risk or reducing the reward.
-- If storm deaths cluster near map edges, investigate whether players are being trapped by distance, extraction routes, or storm timing.
-
-**Metrics to investigate**
-
-- Deaths per loot pickup
-- Storm deaths per match
-
-**Why level designers should care**
-
-The balance between risk and reward, along with fair storm pressure, influences how engaging and fair a match feels.
-
----
-
-## Supporting example — 38-kill match
-
-The submission guide highlights match `b3550292`, which has 38 kills, as a useful supporting example.
-
-Replay this match to inspect where the kills happen and how quickly they occur. Use it as a concrete example alongside the broader heatmap findings; do not treat one match as proof of a map-wide pattern.
-
----
-
-## Reporting checklist
-
-Before presenting an insight as a finding:
-
-- [ ] Validate it in the live tool using the real dataset.
-- [ ] Record the actual counts, percentages, map, and relevant area or sector.
-- [ ] State what caught your attention.
-- [ ] Include the supporting statistic.
-- [ ] Explain the possible design action and the metric it affects.
-- [ ] Explain why the finding matters to a level designer.
-- [ ] Remove or replace the insight if the data does not support it.
+**Takeaway:**: In AmbroseValley, recorded loot events are human-tagged and closely match the recorded movement of the same players. This gives designers a stronger basis for investigating loot interaction locations, while avoiding claims about exact pickup timing or why players chose those locations.

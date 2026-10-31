@@ -117,11 +117,11 @@ The map image's original aspect ratio is preserved when it is loaded. This matte
 These are product decisions implemented to make the telemetry useful and approachable for level designers, not just a raw data viewer.
 
 1. **Replay and Heatmaps are separate modes.** Replay answers “what happened in this match?” Heatmaps answer “where do patterns appear across one or more matches?” Keeping them separate also means each mode loads only the data it needs.
-2. **Multiple-match comparison in Heatmaps.** Designers can tick several matches and combine their per-match cell counts into one map. If no matches are ticked, the selected match is used. Changing maps clears the current comparison selection.
+2. **Multiple-match comparison in Heatmaps/Replay.** Designers can tick several matches and combine their per-match cell counts into one map. If no matches are ticked, the selected match is used. Changing maps clears the current comparison selection.
 3. **Dark and light themes.** A theme toggle supports different viewing preferences and environments.
 4. **Map navigation.** Mouse-wheel zoom, drag-to-pan and zoom controls share one viewport across all drawing layers. The camera is stored as map fractions so resizing the canvas preserves the viewed area. Canvas backing resolution uses the device pixel ratio for crisp rendering. Direction chevrons are positioned and oriented along the path in screen space, so their spacing responds to zoom.
 5. **Variable-speed replay and event animation.** Replay supports 5×, 10×, 20× and 40× playback. A playback clock advances independently of React's normal component rendering; the Canvas renderer redraws the moving players, paths and event effects as time advances. Users can also seek and choose a full path or a recent 30-second trail.
-6. **Focused filters and readable heatmaps.** Map, date, match search and sorting controls help narrow the dataset. Heatmaps show one metric at a time, with Players, Bots or Both selectable; combining unlike metrics would mix different units. The heatmap uses transparent fills, three relative intensity levels and thin outlines so the minimap remains visible. Hovering a hotspot reports the underlying counts.
+6. **Focused filters and readable heatmaps.** Heatmaps support displaying multiple metrics simultaneously for side-by-side comparison, with Players, Bots, or Both selectable. Each metric is visualised using transparent fills, three relative intensity levels, and thin outlines to keep the minimap visible. Hovering over a hotspot reveals the underlying counts for that metric.
 
 ## 6. Major trade-offs
 
