@@ -132,27 +132,51 @@ candidate for focused level-design review, not automatic redesign.
 
 ------------------------------------------------------------------------
 
-### Insight 3 --- Recorded loot events closely align with human player movement
+## Insight 3 — Loot interactions frequently occur near combat locations
 
 ### Evidence
 
-### Scope: all 566 available AmbroseValley matches.
-- 9,936 recorded Loot events were found across 539 matches.
-- Every recorded Loot event was tagged bot: false and included a player ID, timestamp (t), and map position (u, v).
-- Every event's player ID matched a player record with a timestamped movement path.
-- For each loot event, the closest movement-path sample for that same player was identified:
-  - 9,528 of 9,936 events (95.9%) had a path sample within 5 seconds of the event timestamp.
-  - The median positional distance between the loot event and its nearest path sample was approximately 0.00108 normalized map units (about 0.07 cells on the 64 × 64 grid).
+**Scope:** 566 available AmbroseValley matches.
+
+- 9,936 recorded human Loot events were identified.
+- 8,994 loot events occurred in matches containing at least one recorded player-caused kill.
+- Each loot event was compared against the nearest player-caused kill event within the same match.
+- The distance was calculated using the 64 × 64 heatmap grid.
+
+| Distance from nearest kill | Loot events | Percentage |
+|---|---:|---:|
+| Same cell | 24 | 0.27% |
+| Within 1 cell | 3,059 | 34.0% |
+| Within 2 cells | 4,721 | 52.5% |
+| Within 3 cells | 5,606 | 62.3% |
+| Within 5 cells | 6,407 | 71.2% |
+| Within 10 cells | 7,545 | 83.9% |
+
+*Percentages are calculated using the 8,994 loot events from matches with recorded player-caused kills.*
 
 ### Key finding
-The recorded loot events are strongly associated with human players' movement in both time and location. This supports treating the Loot layer as a useful indicator of where players are interacting with loot, rather than interpreting it as bot activity or loot-spawn locations.
+
+Although loot interactions and kills rarely occur in the exact same grid cell, a substantial proportion of loot events occur within a short spatial distance of recorded combat locations. Approximately 52.5% of comparable loot events occurred within two grid cells of a player-caused kill.
+
+This suggests that loot interactions frequently take place in areas surrounding recorded combat activity, rather than necessarily at the exact locations where kills occur.
 
 ### Why a level designer should care
-This helps distinguish places players merely pass through from places where recorded loot interactions occur. Comparing these events with traffic, combat, and deaths can help designers investigate whether loot locations sit along common routes, draw players into particular areas, or expose them to nearby danger.
-Potential design action
-Use the loot-event positions alongside player paths and nearby combat/death events to inspect specific locations. Look for loot interactions that occur along established routes versus locations that appear to pull players away from those routes. Review the local cover, approach options, and nearby threats before changing loot placement.
+
+This spatial relationship can help designers investigate how loot distribution and combat locations interact. Areas where loot activity occurs near combat hotspots may create opportunities for contested looting and potential risk-versus-reward situations.
+
+### Potential design investigation
+
+- Inspect loot hotspots surrounding combat-heavy areas.
+- Review whether nearby loot locations provide sufficient cover and alternative approaches.
+- Investigate whether loot placement encourages players to enter or remain near contested regions.
+- Compare these patterns across individual matches and dates to determine whether they are persistent.
 
 ### Calculation notes and limitations
-The comparison matched each Loot event to the movement path of the player ID recorded on that event, then found that player's nearest path sample by timestamp. Movement paths are sampled at intervals, so the nearest sample is not necessarily exactly at the event time. The 5-second result means a path sample exists within that time window; it does not prove the player crossed a location first and looted exactly one second later. The positional comparison is also not proof of item collection success unless the source's Loot event definition confirms that semantic. The data supports a close time-and-location association, not a causal claim that loot attracted the player.
 
-**Takeaway:**: In AmbroseValley, recorded loot events are human-tagged and closely match the recorded movement of the same players. This gives designers a stronger basis for investigating loot interaction locations, while avoiding claims about exact pickup timing or why players chose those locations.
+Each recorded human Loot event was compared with the nearest player-caused kill event (`Kill` or `BotKill`) from the same match. Distance was calculated using Euclidean distance between their positions on the 64 × 64 grid.
+
+The analysis measures spatial proximity, not temporal proximity. It does not establish whether the loot interaction happened before or after the kill, whether the player collecting loot was involved in the combat, or whether the location was dangerous at the time.
+
+Matches without recorded player-caused kills were excluded from the nearest-kill distance calculation.
+
+**Takeaway:** Loot interactions frequently occur near recorded combat locations, providing designers with an opportunity to investigate the relationship between loot placement, combat hotspots, and potential risk-reward scenarios.
