@@ -6,8 +6,9 @@ import { useMapZoom } from "../hooks/useMapZoom.js";
 import { ZoomControls } from "./ui/ZoomControls.jsx";
 
 // Heatmaps canvas: static colours + a hover readout ("12 kills · players").
-// heat: { counts, max } for the colours. readout: [{ label side, one, many, array }] for hover.
-export function HeatmapCanvas({ imageSrc, heat, grid, readout, label, heatLevels }) {
+// heats: [{ heat: { counts, max }, levels }] for independently coloured layers.
+// readout: [{ side, one, many, array }] for each selected layer.
+export function HeatmapCanvas({ imageSrc, heats, grid, readout, label }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
   const lastCell = useRef(-1);
@@ -25,16 +26,16 @@ export function HeatmapCanvas({ imageSrc, heat, grid, readout, label, heatLevels
   }, [imageSrc]);
 
   useEffect(() => {
-    rendererRef.current.setHeat(heat, grid, heatLevels);
+    rendererRef.current.setHeats(heats, grid);
     lastCell.current = -1; // data changed: the readout must be recomputed
     setHover(null);
-  }, [heat, grid, heatLevels]);
+  }, [heats, grid]);
 
   // Readout for the cell under the pointer. Only recomputed when the cell changes.
   // Hidden while dragging the map, and off the map's edge.
   const onPointerMove = (e) => {
     const renderer = rendererRef.current;
-    if (!heat || renderer.dragging) return onPointerLeave();
+    if (!heats.length || renderer.dragging) return onPointerLeave();
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;

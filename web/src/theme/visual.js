@@ -21,30 +21,139 @@ export const MARKER = {
   outlineWidth: 1.5,
 };
 
-// Heatmap "edges only" style: three stacked levels, each a thin smooth outline plus a
-// fill that fades with density: almost clear just inside the outline, strongest at the
-// busiest point. The map stays readable and red hotspots stand out.
-// `from` = share of the busiest spot in the selection (0–1). Later levels draw on top.
-// `fill` = [opacity where the level starts, opacity at its busiest].
-export const HEATMAP = {
-  levels: [
-    { name: "Low", from: 0.12, rgb: [91, 229, 43], fill: [0.0, 0.28], edge: 0.75 },    // parrot green
-    { name: "Medium", from: 0.4, rgb: [255, 214, 10], fill: [0.02, 0.38], edge: 0.9 }, // yellow
-    { name: "High", from: 0.68, rgb: [255, 40, 40], fill: [0.05, 0.62], edge: 1.0 },   // bright red
+// Heatmap palette stops. These are colour/opacity keyframes, not separate zones:
+// the renderer blends continuously between them, so no contour partitions are drawn.
+// `from` = density position (0–1); `fill` = opacity at the start/end of its segment.
+const HEAT_PALETTES = {
+  traffic: {
+    players: [
+      [168, 216, 255],
+      [39, 139, 234],
+      [255, 227, 77],
+    ],
+    bots:  [
+  [181, 243, 232], // Mild turquoise
+  [32, 185, 154],  // Thick emerald
+  [185, 245, 42],  // Dense lime
+],
+    both: [
+      [216, 200, 255],
+      [133, 85, 216],
+      [255, 181, 46],
+    ],
+  },
+
+  kills: {
+  players: [
+    [255, 177, 161],
+    [220, 49, 89],
+    [255, 212, 59],
   ],
-  lineWidth: 1.4,     // outline thickness in CSS pixels, at any zoom
+  bots: [
+    [255, 190, 165],
+    [235, 91, 75],
+    [255, 190, 45],
+  ],
+  both: [
+    [255, 165, 175],
+    [198, 45, 91],
+    [255, 220, 75],
+  ],
+},
 
-  // Density field: built once per selection in map space, then sampled for whatever is
-  // on screen, so outlines stay sharp when zoomed and levels never change with the view.
-  fieldSize: 512,     // field resolution across the whole map
-  radiusCells: 1.6,   // each grid cell becomes a soft round blob this many cells wide (radius)…
-  minRadius: 10,      // …at least this many field pixels, so single events stay visible
-  blobAlpha: 0.3,     // busiest cell's blob strength; low so overlaps don't hit the 255 ceiling
-  minWeight: 0.08,    // share of blobAlpha that even a 1-event cell gets
-  smooth: 2,          // blur (field pixels) so outlines are smooth curves, no specks
+  deaths: {
+    players: [
+      [255, 192, 192],
+      [228, 71, 85],
+      [255, 181, 46],
+    ],
+    bots: [
+      [255, 209, 194],
+      [240, 107, 85],
+      [233, 161, 27],
+    ],
+    both: [
+      [245, 185, 213],
+      [217, 75, 131],
+      [255, 194, 71],
+    ],
+  },
 
-  sharpDelayMs: 120,  // after zooming/dragging stops, redraw sharp at screen resolution
-  maxPixelRatio: 2,   // cap for very high-DPI screens (cost grows with pixel count)
+  storm: {
+    players: [
+      [184, 240, 232],
+      [53, 187, 170],
+      [213, 240, 68],
+    ],
+    bots: [
+      [200, 240, 193],
+      [84, 185, 107],
+      [229, 216, 60],
+    ],
+    both: [
+      [174, 233, 208],
+      [47, 175, 139],
+      [201, 232, 61],
+    ],
+  },
+
+  loot: {
+    players: [
+      [217, 197, 255],
+      [160, 90, 232],
+      [255, 211, 78],
+    ],
+    bots: [
+      [240, 196, 255],
+      [208, 90, 197],
+      [255, 184, 77],
+    ],
+    both: [
+      [200, 196, 255],
+      [117, 102, 222],
+      [255, 225, 106],
+    ],
+  },
+};
+
+export function heatLevelsFor(groupId, sideId = "both") {
+  const groupPalettes = HEAT_PALETTES[groupId] ?? HEAT_PALETTES.traffic;
+  const palette = groupPalettes[sideId] ?? groupPalettes.both ?? groupPalettes.players;
+  return [
+  {
+    name: "Low",
+    from: 0.10,
+    rgb: palette[0],
+    fill: [0.00, 0.10],
+    edge: 0,
+  },
+  {
+    name: "Medium",
+    from: 0.30,
+    rgb: palette[1],
+    fill: [0.10, 0.30],
+    edge: 0,
+  },
+  {
+    name: "High",
+    from: 0.68,
+    rgb: palette[2],
+    fill: [0.30, 0.72],
+    edge: 0,
+  },
+];
+}
+
+export const HEATMAP = {
+  levels: heatLevelsFor("traffic"),
+  fieldSize: 512,
+  radiusCells: 1.6,
+  minRadius: 10,
+  blobAlpha: 0.30,
+  minWeight: 0.08,
+  smooth: 3,
+  sharpDelayMs: 120,
+  maxPixelRatio: 2,
 };
 
 export const PLAYBACK = {

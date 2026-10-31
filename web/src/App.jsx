@@ -4,7 +4,7 @@ import { filterMatches } from "./lib/filterMatches.js";
 import { plural, shortId } from "./lib/format.js";
 import { toggleInSet } from "./lib/sets.js";
 import { DEFAULT_LAYERS, LAYERS } from "./config/layers.js";
-import { DEFAULT_HEAT_SELECTION } from "./config/heatmapMetrics.js";
+import { DEFAULT_HEAT_SELECTIONS, selectionFromKey, toggleHeatSelection } from "./config/heatmapMetrics.js";
 import { PlaybackClock } from "./renderer/PlaybackClock.js";
 import { FilterBar } from "./components/FilterBar.jsx";
 import { MatchList } from "./components/MatchList.jsx";
@@ -68,7 +68,8 @@ function Explorer({ index }) {
   const [clock] = useState(() => new PlaybackClock());     // one clock for the whole session
 
   // ---- Heatmaps settings ----
-  const [heatSelection, setHeatSelection] = useState(DEFAULT_HEAT_SELECTION); // one metric + side
+  const [heatSelections, setHeatSelections] = useState(() => new Set(DEFAULT_HEAT_SELECTIONS)); // independently selected metric + side
+  const heatSelectionList = useMemo(() => [...heatSelections].map(selectionFromKey), [heatSelections]);
   const [checked, setChecked] = useState(() => new Set()); // Heatmap comparison selection
   const [replayChecked, setReplayChecked] = useState(() => new Set()); // Replay comparison, capped at three
   const [replayChecksCleared, setReplayChecksCleared] = useState(false);
@@ -203,8 +204,8 @@ function Explorer({ index }) {
             mapImage={mapImage}
             matchIds={heatIds}
             sourceLabel={heatSource}
-            selection={heatSelection}
-            onSelect={setHeatSelection}
+            selections={heatSelectionList}
+            onToggleSelection={(key) => setHeatSelections((prev) => toggleHeatSelection(prev, key))}
           />
         ) : (
           <ReplayView

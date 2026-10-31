@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cellAt, metricArrays, sumMetrics } from "./heatmap.js";
-import { metricIdsFor } from "../config/heatmapMetrics.js";
-import { HEATMAP } from "../theme/visual.js";
+import { metricIdsFor, selectionFromKey, selectionKey, toggleHeatSelection } from "../config/heatmapMetrics.js";
+import { HEATMAP, heatLevelsFor } from "../theme/visual.js";
 
 const file = {
   grid: 2,
@@ -52,6 +52,33 @@ describe("metricIdsFor", () => {
   });
 });
 
+describe("multi-metric selection and palettes", () => {
+  it("round-trips independent metric selections", () => {
+    const selection = { group: "kills", side: "players" };
+    expect(selectionFromKey(selectionKey(selection))).toEqual(selection);
+  });
+  it("keeps Both exclusive with its Players and Bots constituent selections", () => {
+    const players = toggleHeatSelection(new Set(["traffic:both"]), "traffic:players");
+    expect([...players]).toEqual(["traffic:players"]);
+    const both = toggleHeatSelection(new Set(["traffic:players", "traffic:bots"]), "traffic:both");
+    expect([...both]).toEqual(["traffic:both"]);
+  });
+  it("provides distinct three-shade palettes for each metric family", () => {
+    const groups = ["traffic", "kills", "deaths", "storm", "loot"];
+    const palettes = groups.map((group) => heatLevelsFor(group).map((level) => level.rgb.join(",")));
+    expect(palettes.every((palette) => palette.length === 3)).toBe(true);
+    expect(new Set(palettes.map((palette) => palette[1])).size).toBe(groups.length);
+    expect(heatLevelsFor("traffic", "players")[1].rgb).not.toEqual(heatLevelsFor("traffic", "bots")[1].rgb);
+    expect(HEATMAP.levels).toHaveLength(3);
+    for (const group of groups) {
+      const levels = heatLevelsFor(group);
+      expect(levels[2].fill[1]).toBeGreaterThan(levels[1].fill[1]);
+      expect(levels[2].fill[1]).toBeGreaterThanOrEqual(0.8);
+    }
+    expect(HEATMAP.smooth).toBe(3);
+  });
+});
+
 describe("cellAt", () => {
   it("maps image fractions to grid cells, clamped at the edges", () => {
     expect(cellAt(0, 0, 2)).toBe(0);
@@ -65,8 +92,8 @@ import { normaliseField, paintHeat } from "../renderer/contours.js";
 
 describe("heatmap painting (renderer/contours.js)", () => {
   const LEVELS = [
-    { from: 0.2, rgb: [0, 255, 0], fill: [0.1, 0.3], edge: 1 },
-    { from: 0.6, rgb: [255, 0, 0], fill: [0.2, 0.6], edge: 1 },
+    { from: 0.2, rgb: [0, 255, 0], fill: [0.0, 0.3], edge: 0 },
+    { from: 0.6, rgb: [255, 0, 0], fill: [0.3, 0.7], edge: 0 },
   ];
   // 8×8 field rising from 0 (left) to 1 (right)
   const size = 8;
@@ -81,33 +108,40 @@ describe("heatmap painting (renderer/contours.js)", () => {
 
   it("deepens the fill with density inside a level", () => {
     const view = { x: 0, y: 0, mapW: 80, mapH: 80 };
-    const px = paintHeat(field, size, view, 80, 80, 1, LEVELS, 1);
+    const px = paintHeat(field, size, view, 80, 80, 1, LEVELS);
     expect(alphaAt(px, 80, 76, 40)).toBeGreaterThan(alphaAt(px, 80, 60, 40)); // both red; right is busier
   });
 
   it("leaves areas below the first level and off the map transparent", () => {
     const view = { x: 40, y: 0, mapW: 80, mapH: 80 };  // map shifted right: x < 40 is off the map
-    const px = paintHeat(field, size, view, 80, 80, 1, LEVELS, 1);
+    const px = paintHeat(field, size, view, 80, 80, 1, LEVELS);
     expect(alphaAt(px, 80, 10, 40)).toBe(0);            // off the map
     expect(alphaAt(px, 80, 42, 40)).toBe(0);            // on the map, density ≈ 0
   });
 
   it("gives the same colour at the same map point whatever the zoom (levels never shift)", () => {
-    const whole = paintHeat(field, size, { x: 0, y: 0, mapW: 80, mapH: 80 }, 80, 80, 1, LEVELS, 1);
-    const zoom4 = paintHeat(field, size, { x: -240, y: 0, mapW: 320, mapH: 320 }, 80, 80, 1, LEVELS, 1);
+    const whole = paintHeat(field, size, { x: 0, y: 0, mapW: 80, mapH: 80 }, 80, 80, 1, LEVELS);
+    const zoom4 = paintHeat(field, size, { x: -240, y: 0, mapW: 320, mapH: 320 }, 80, 80, 1, LEVELS);
     // map point u = 0.9: x = 72 in the whole view; x = -240 + 0.9 × 320 = 48 in the zoomed view
     expect(Math.abs(alphaAt(whole, 80, 72, 10) - alphaAt(zoom4, 80, 48, 40))).toBeLessThan(8);
   });
 
-  it("draws a thin outline where density crosses a level", () => {
-    const view = { x: 0, y: 0, mapW: 700, mapH: 70 };   // stretched wide: ~100 px per field cell
-    const px = paintHeat(field, size, view, 700, 70, 1, LEVELS, 2);
-    // threshold 0.6 is at field x = 0.6 × 7 = 4.2 → screen x ≈ (4.2 + 0.5) / 8 × 700 ≈ 411
-    let peak = 0, at = 0;
-    for (let x = 380; x < 440; x++) if (alphaAt(px, 700, x, 35) > peak) { peak = alphaAt(px, 700, x, 35); at = x; }
-    expect(peak).toBe(255);
-    expect(Math.abs(at - 411)).toBeLessThan(3);
-    expect(alphaAt(px, 700, at + 6, 35)).toBeLessThan(200); // a few px away it's just fill
+  it("blends colours and opacity continuously without drawing contour partitions", () => {
+    const view = { x: 0, y: 0, mapW: 80, mapH: 80 };
+    const px = paintHeat(field, size, view, 80, 80, 1, LEVELS);
+    const samplePixel = (x) => {
+      const offset = (40 * 80 + x) * 4;
+      return [...px.slice(offset, offset + 4)];
+    };
+    const before = samplePixel(43);
+    const at = samplePixel(44);
+    const after = samplePixel(45);
+    expect(before[3]).toBeGreaterThan(0);
+    expect(at[3]).toBeGreaterThan(before[3]);
+    expect(after[3]).toBeGreaterThan(at[3]);
+    // Colour changes gradually across the former 0.6 boundary.
+    expect(Math.abs(after[0] - at[0])).toBeLessThan(20);
+    expect(Math.abs(at[0] - before[0])).toBeLessThan(20);
   });
 });
 

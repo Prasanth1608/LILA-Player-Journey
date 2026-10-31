@@ -32,6 +32,32 @@ export const HEAT_SIDES = [
 ];
 
 export const DEFAULT_HEAT_SELECTION = { group: "traffic", side: "both" };
+export const DEFAULT_HEAT_SELECTIONS = ["traffic:both"];
+
+export const selectionKey = ({ group, side }) => `${group}:${side}`;
+export function selectionFromKey(key) {
+  const [group, side] = String(key).split(":");
+  return { group, side };
+}
+
+// "Both" includes the player and bot arrays, so it must not be shown alongside
+// either constituent layer for the same metric group (which would double-render it).
+export function toggleHeatSelection(current, key) {
+  const { group, side } = selectionFromKey(key);
+  const next = new Set(current);
+  if (next.has(key)) {
+    next.delete(key);
+    return next;
+  }
+  if (side === "both") {
+    next.delete(`${group}:players`);
+    next.delete(`${group}:bots`);
+  } else {
+    next.delete(`${group}:both`);
+  }
+  next.add(key);
+  return next;
+}
 export const groupById = Object.fromEntries(HEAT_GROUPS.map((g) => [g.id, g]));
 
 export function sideAvailable(group, side) {

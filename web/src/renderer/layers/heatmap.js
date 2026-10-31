@@ -3,7 +3,7 @@
 //      blob into a map-sized canvas; busier cells draw stronger blobs and overlaps add up.
 //      Smoothed and scaled to 0–1 → the density field.
 //   2. paintHeatCanvas (per view): renderer/contours.js samples the field for exactly
-//      what is on screen, at screen resolution: smooth outlines and density-faded fills.
+//      what is on screen and paints one continuous colour/opacity fog, without partitions.
 import { HEATMAP } from "../../theme/visual.js";
 import { normaliseField, paintHeat } from "../contours.js";
 
@@ -54,7 +54,7 @@ export function paintHeatCanvas(field, view, pixelRatio, levels = HEATMAP.levels
   canvas.height = h;
   const ctx = canvas.getContext("2d");
   const image = ctx.createImageData(w, h);
-  image.data.set(paintHeat(field.data, field.size, view, w, h, pixelRatio, levels, HEATMAP.lineWidth));
+  image.data.set(paintHeat(field.data, field.size, view, w, h, pixelRatio, levels));
   ctx.putImageData(image, 0, 0);
   return canvas;
 }

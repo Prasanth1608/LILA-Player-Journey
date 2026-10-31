@@ -1,9 +1,5 @@
-// Heatmaps mode: the minimap with a static colour overlay. No clock, no animation.
-// Note: `image` belongs to MapSurface (the minimap); the heat overlays have other names.
-//
-// Sharp at any zoom: the overlay is painted at screen resolution for the current view.
-// While zooming or dragging, the whole-map overlay is stretched (instant); shortly after
-// the movement stops, a sharp one is painted for the new view.
+// Heatmaps mode: one or more independently coloured overlays on the minimap.
+// Each selected metric is normalised independently so its spatial pattern remains visible.
 import { MapSurface } from "./MapSurface.js";
 import { HEATMAP } from "../theme/visual.js";
 import { buildField, paintHeatCanvas } from "./layers/heatmap.js";
@@ -11,22 +7,43 @@ import { buildField, paintHeatCanvas } from "./layers/heatmap.js";
 const viewKey = (v) => `${v.width}|${v.height}|${v.x}|${v.y}|${v.mapW}|${v.mapH}`;
 
 export class HeatmapRenderer extends MapSurface {
-  field = null;      // density field for the current selection (null = nothing to show)
-  whole = null;      // { key, canvas } overlay of the whole map at the current canvas size
-  sharp = null;      // { key, canvas } overlay painted for one zoomed/panned view
+  fields = [];
+  whole = null;
+  sharp = null;
   timer = null;
-  levels = HEATMAP.levels;
 
-  // heat: { counts, max } from lib/heatmap.js sumMetrics, or null
-  setHeat(heat, grid, levels = HEATMAP.levels) {
-    this.levels = levels;
-    this.field = heat ? buildField(heat.counts, heat.max, grid) : null;
+  // heats: [{ heat: { counts, max }, levels }]
+  setHeats(heats, grid) {
+    clearTimeout(this.timer);
+    this.fields = heats.filter((item) => item.heat).map(({ heat, levels }) => ({
+      field: buildField(heat.counts, heat.max, grid),
+      levels: levels ?? HEATMAP.levels,
+    }));
     this.whole = this.sharp = null;
     this.draw();
   }
 
+  // Backwards-compatible single-layer entry point for any existing integrations.
+  setHeat(heat, grid, levels = HEATMAP.levels) {
+    this.setHeats(heat ? [{ heat, levels }] : [], grid);
+  }
+
+  paintComposite(view, ratio) {
+    const width = Math.max(1, Math.round(view.width * ratio));
+    const height = Math.max(1, Math.round(view.height * ratio));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    for (const item of this.fields) {
+      const layer = paintHeatCanvas(item.field, view, ratio, item.levels);
+      ctx.drawImage(layer, 0, 0, width, height);
+    }
+    return canvas;
+  }
+
   drawOverlay(ctx, view) {
-    if (!this.field) return;
+    if (this.fields.length === 0) return;
     const ratio = Math.min(HEATMAP.maxPixelRatio, window.devicePixelRatio || 1);
     const key = viewKey(view);
     if (this.sharp?.key === key) {
@@ -34,22 +51,20 @@ export class HeatmapRenderer extends MapSurface {
       return;
     }
 
-    // Whole map, painted for the zoomed-out view at this canvas size
     const home = { width: view.width, height: view.height, x: 0, y: 0, mapW: view.width, mapH: view.height };
     if (this.whole?.key !== viewKey(home)) {
-      this.whole = { key: viewKey(home), canvas: paintHeatCanvas(this.field, home, ratio, this.levels) };
+      this.whole = { key: viewKey(home), canvas: this.paintComposite(home, ratio) };
     }
-    if (key === this.whole.key) { // zoomed out: the whole-map overlay is already sharp
+    if (key === this.whole.key) {
       ctx.drawImage(this.whole.canvas, 0, 0, view.width, view.height);
       return;
     }
 
-    // Zoomed in: stretch the whole-map overlay for now, paint a sharp one once movement stops
     ctx.drawImage(this.whole.canvas, view.x, view.y, view.mapW, view.mapH);
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
-      if (!this.field) return;
-      this.sharp = { key: viewKey(this.view), canvas: paintHeatCanvas(this.field, this.view, ratio, this.levels) };
+      if (this.fields.length === 0) return;
+      this.sharp = { key: viewKey(this.view), canvas: this.paintComposite(this.view, ratio) };
       this.draw();
     }, HEATMAP.sharpDelayMs);
   }
