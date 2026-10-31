@@ -69,7 +69,9 @@ function Explorer({ index }) {
 
   // ---- Heatmaps settings ----
   const [heatSelection, setHeatSelection] = useState(DEFAULT_HEAT_SELECTION); // one metric + side
-  const [checked, setChecked] = useState(() => new Set()); // ticked matches (start empty)
+  const [checked, setChecked] = useState(() => new Set()); // Heatmap comparison selection
+  const [replayChecked, setReplayChecked] = useState(() => new Set()); // Replay comparison, capped at three
+  const [replayChecksCleared, setReplayChecksCleared] = useState(false);
 
   // ---- Derived data (recomputed only when its inputs change) ----
   const dateLabels = useMemo(
@@ -92,6 +94,14 @@ function Explorer({ index }) {
     () => (visibleChecked.length > 0 ? visibleChecked : selected ? [selected.id] : []),
     [visibleChecked, selected]
   );
+  const visibleReplayChecked = useMemo(
+    () => matches.filter((m) => replayChecked.has(m.id)).map((m) => m.id),
+    [matches, replayChecked]
+  );
+  const replayIds = useMemo(
+    () => visibleReplayChecked.length > 0 ? visibleReplayChecked : replayChecksCleared ? [] : selected ? [selected.id] : [],
+    [visibleReplayChecked, replayChecksCleared, selected]
+  );
   const heatSource = visibleChecked.length > 0
     ? `${plural(visibleChecked.length, "match", "matches")} combined`
     : selected ? `Match ${shortId(selected.id)}` : "";
@@ -106,9 +116,36 @@ function Explorer({ index }) {
     clock.pause(); // nothing keeps animating in the background
     setMode(next);
   };
+  // Match checkbox selections belong to the current filtered match list.
+  // Reset them whenever the list's map/date/sort/search criteria changes.
+  const resetMatchSelections = () => {
+    setChecked(new Set());
+    setReplayChecked(new Set());
+    setReplayChecksCleared(false);
+  };
   const changeMap = (id) => {
     setMapId(id);
-    setChecked(new Set()); // ticks belong to one map's comparison
+    resetMatchSelections(); // ticks belong to one map's comparison
+  };
+  const changeSort = (value) => {
+    setSortBy(value);
+    resetMatchSelections();
+  };
+  const changeQuery = (value) => {
+    setQuery(value);
+    resetMatchSelections();
+  };
+  const toggleDate = (id) => {
+    setSelectedDates((prev) => toggleInSet(prev, id));
+    resetMatchSelections();
+  };
+  const selectAllDates = () => {
+    setSelectedDates(new Set(index.dates.map((d) => d.id)));
+    resetMatchSelections();
+  };
+  const clearDates = () => {
+    setSelectedDates(new Set());
+    resetMatchSelections();
   };
 
   const mapImage = index.maps.find((m) => m.id === mapId)?.image;
@@ -124,23 +161,39 @@ function Explorer({ index }) {
             mapId={mapId}
             selectedDates={selectedDates}
             onMapChange={changeMap}
-            onToggleDate={(id) => setSelectedDates((prev) => toggleInSet(prev, id))}
-            onAllDates={() => setSelectedDates(new Set(index.dates.map((d) => d.id)))}
-            onClearDates={() => setSelectedDates(new Set())}
+            onToggleDate={toggleDate}
+            onAllDates={selectAllDates}
+            onClearDates={clearDates}
           />
           <MatchList
             matches={matches}
             dateLabels={dateLabels}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={(id) => { setSelectedId(id); setReplayChecksCleared(false); }}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={changeSort}
             query={query}
-            onQueryChange={setQuery}
-            checked={inHeatmaps ? checked : null}
-            onToggleCheck={(id) => setChecked((prev) => toggleInSet(prev, id))}
-            onCheckAll={() => setChecked(new Set(matches.map((m) => m.id)))}
-            onClearChecks={() => setChecked(new Set())}
+            onQueryChange={changeQuery}
+            checked={inHeatmaps ? checked : replayChecked}
+            onToggleCheck={(id) => {
+              if (inHeatmaps) {
+                setChecked((prev) => toggleInSet(prev, id));
+              } else {
+                setReplayChecked((prev) => {
+                  if (!prev.has(id) && prev.size >= 3) return prev;
+                  return toggleInSet(prev, id);
+                });
+                setReplayChecksCleared(false);
+              }
+            }}
+            onCheckAll={() => { setChecked(new Set(matches.map((m) => m.id))); }}
+            onClearChecks={() => {
+              if (inHeatmaps) setChecked(new Set());
+              else { setReplayChecked(new Set()); setReplayChecksCleared(true); }
+            }}
+            checkLabel={inHeatmaps ? "Compare" : "Replay"}
+            allowCheckAll={inHeatmaps}
+            maxChecked={inHeatmaps ? null : 3}
           />
         </aside>
 
@@ -158,7 +211,8 @@ function Explorer({ index }) {
             mapId={mapId}
             mapImage={mapImage}
             selected={selected}
-            dateLabel={selected ? dateLabels[selected.date] : ""}
+            matches={matches.filter((m) => replayIds.includes(m.id))}
+            dateLabels={dateLabels}
             layers={layers}
             onToggleLayer={(id) => setLayers((prev) => toggleInSet(prev, id))}
             onAllLayers={() => setLayers(new Set(LAYERS.map((l) => l.id)))}

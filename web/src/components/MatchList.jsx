@@ -4,10 +4,11 @@ import { SORTS } from "../lib/filterMatches.js";
 import { formatLength, formatStartUtc, plural, shortId } from "../lib/format.js";
 
 // The matches that pass the filters. Click one to select it.
-// With `checked` (Heatmaps mode only), each row also gets a checkbox for comparing
-// several matches; ticking never changes the clicked selection.
+// With `checked`, each row also gets a checkbox for selecting multiple matches;
+// ticking never changes the clicked selection.
 export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, onSortChange, query, onQueryChange,
-                            checked = null, onToggleCheck, onCheckAll, onClearChecks }) {
+                            checked = null, onToggleCheck, onCheckAll, onClearChecks, checkLabel = "Compare",
+                            allowCheckAll = true, maxChecked = null }) {
   const checkable = checked !== null;
   const tickedCount = checkable ? matches.filter((m) => checked.has(m.id)).length : 0;
 
@@ -15,9 +16,16 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
     <section className="match-list" aria-label="Matches">
       {checkable && (
         <div className="list-actions">
-          <span className="label">{tickedCount === 0 ? "Tick to compare" : `${tickedCount} ticked`}</span>
-          <AllClearLinks selected={tickedCount} total={matches.length} what="ticked matches"
-                         onAll={onCheckAll} onClear={onClearChecks} />
+          <span className="label">{tickedCount === 0 ? `Tick to ${checkLabel.toLowerCase()}` : `${tickedCount} selected`}</span>
+          <span className="link-group">
+            {allowCheckAll && (
+              <AllClearLinks selected={tickedCount} total={matches.length} what="matches"
+                             onAll={onCheckAll} onClear={onClearChecks} />
+            )}
+            {!allowCheckAll && tickedCount > 0 && (
+              <button type="button" className="link-button" onClick={onClearChecks} aria-label="Clear selected matches">Clear</button>
+            )}
+          </span>
         </div>
       )}
       <div className="list-search">
@@ -52,8 +60,10 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
                   type="checkbox"
                   className="row-check"
                   checked={checked.has(m.id)}
+                  disabled={maxChecked !== null && !checked.has(m.id) && tickedCount >= maxChecked}
                   onChange={() => onToggleCheck(m.id)}
-                  aria-label={`Compare match ${shortId(m.id)}`}
+                  aria-label={`${checkLabel} match ${shortId(m.id)}`}
+                  title={maxChecked !== null && !checked.has(m.id) && tickedCount >= maxChecked ? `Select up to ${maxChecked} matches` : undefined}
                 />
               )}
               <button
@@ -85,6 +95,17 @@ export function MatchList({ matches, dateLabels, selectedId, onSelect, sortBy, o
             </li>
           ))}
         </ul>
+      )}
+      {checkable && maxChecked !== null && (
+        <div
+          className={`selection-limit ${tickedCount >= maxChecked ? "selection-limit--reached" : "selection-limit--guidance"}`}
+          role="status"
+          aria-live="polite"
+        >
+          {tickedCount >= maxChecked
+            ? `Maximum ${maxChecked} matches selected. Clear a selection to choose another.`
+            : `Select up to ${maxChecked} matches for precise comparison.`}
+        </div>
       )}
     </section>
   );

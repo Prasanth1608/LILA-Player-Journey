@@ -46,3 +46,20 @@ export function cellAt(xFraction, yFraction, grid) {
   const row = Math.min(grid - 1, Math.max(0, Math.floor(yFraction * grid)));
   return row * grid + col;
 }
+
+// Binary map-space mask: a cell is unvisited only if neither humans nor bots
+// visited it in any selected match. A single visit clears the cell.
+export function unvisitedCells(arrays) {
+  const humans = arrays.traffic_players;
+  const bots = arrays.traffic_bots;
+  if (!humans || !bots) return null;
+  const counts = new Float32Array(humans.length);
+  let unvisited = 0;
+  for (let i = 0; i < counts.length; i++) {
+    if (humans[i] === 0 && bots[i] === 0) {
+      counts[i] = 1;
+      unvisited++;
+    }
+  }
+  return unvisited > 0 ? { counts, max: 1, total: unvisited } : null;
+}

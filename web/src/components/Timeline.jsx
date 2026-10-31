@@ -10,13 +10,13 @@ const TRAIL_OPTIONS = [
 ];
 
 // Play / pause, scrubber with event ticks, time, speed and trail mode.
-export function Timeline({ clock, match, layers, trail, onTrailChange }) {
+export function Timeline({ clock, matches, layers, trail, onTrailChange }) {
   // Whole seconds only: the label and slider update once a second, not every frame
   const second = useClockValue(clock, (c) => Math.floor(c.time));
   const playing = useClockValue(clock, (c) => c.playing);
   const speed = useClockValue(clock, (c) => c.speed);
-  const duration = match?.duration ?? 0;
-  const disabled = !match || duration <= 0;
+  const duration = matches.length ? Math.max(...matches.map((match) => match.duration ?? 0)) : 0;
+  const disabled = matches.length === 0 || duration <= 0;
 
   // Space bar plays/pauses, unless the user is typing or using another control
   useEffect(() => {
@@ -32,10 +32,10 @@ export function Timeline({ clock, match, layers, trail, onTrailChange }) {
 
   // Ticks on the scrubber for kills, deaths and storm deaths (layers that are on)
   const ticks = useMemo(() => {
-    if (!match || duration <= 0) return [];
+    if (matches.length === 0 || duration <= 0) return [];
     return LAYERS.filter((l) => l.kind === "marker" && l.group !== "Loot" && layers.has(l.id))
-      .flatMap((l) => match.events.filter(l.events).map((e) => ({ t: e.t, color: l.color })));
-  }, [match, layers, duration]);
+      .flatMap((l) => matches.flatMap((match) => match.events.filter(l.events).map((e) => ({ t: e.t, color: l.color }))));
+  }, [matches, layers, duration]);
 
   return (
     <div className="timeline" aria-label="Playback">

@@ -15,9 +15,11 @@ export class HeatmapRenderer extends MapSurface {
   whole = null;      // { key, canvas } overlay of the whole map at the current canvas size
   sharp = null;      // { key, canvas } overlay painted for one zoomed/panned view
   timer = null;
+  levels = HEATMAP.levels;
 
   // heat: { counts, max } from lib/heatmap.js sumMetrics, or null
-  setHeat(heat, grid) {
+  setHeat(heat, grid, levels = HEATMAP.levels) {
+    this.levels = levels;
     this.field = heat ? buildField(heat.counts, heat.max, grid) : null;
     this.whole = this.sharp = null;
     this.draw();
@@ -35,7 +37,7 @@ export class HeatmapRenderer extends MapSurface {
     // Whole map, painted for the zoomed-out view at this canvas size
     const home = { width: view.width, height: view.height, x: 0, y: 0, mapW: view.width, mapH: view.height };
     if (this.whole?.key !== viewKey(home)) {
-      this.whole = { key: viewKey(home), canvas: paintHeatCanvas(this.field, home, ratio) };
+      this.whole = { key: viewKey(home), canvas: paintHeatCanvas(this.field, home, ratio, this.levels) };
     }
     if (key === this.whole.key) { // zoomed out: the whole-map overlay is already sharp
       ctx.drawImage(this.whole.canvas, 0, 0, view.width, view.height);
@@ -47,7 +49,7 @@ export class HeatmapRenderer extends MapSurface {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       if (!this.field) return;
-      this.sharp = { key: viewKey(this.view), canvas: paintHeatCanvas(this.field, this.view, ratio) };
+      this.sharp = { key: viewKey(this.view), canvas: paintHeatCanvas(this.field, this.view, ratio, this.levels) };
       this.draw();
     }, HEATMAP.sharpDelayMs);
   }

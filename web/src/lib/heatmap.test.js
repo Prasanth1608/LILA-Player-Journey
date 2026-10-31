@@ -110,3 +110,22 @@ describe("heatmap painting (renderer/contours.js)", () => {
     expect(alphaAt(px, 700, at + 6, 35)).toBeLessThan(200); // a few px away it's just fill
   });
 });
+
+describe("unvisitedCells", () => {
+  it("marks a cell unvisited only when both human and bot traffic are zero", async () => {
+    const { unvisitedCells } = await import("./heatmap.js");
+    const result = unvisitedCells({
+      traffic_players: Float32Array.from([0, 1, 0, 0]),
+      traffic_bots: Float32Array.from([0, 0, 1, 0]),
+    });
+    expect([...result.counts]).toEqual([1, 0, 0, 1]);
+    expect(result.total).toBe(2);
+  });
+  it("returns null when every cell has at least one human or bot visit", async () => {
+    const { unvisitedCells } = await import("./heatmap.js");
+    expect(unvisitedCells({
+      traffic_players: Float32Array.from([1, 0]),
+      traffic_bots: Float32Array.from([0, 1]),
+    })).toBeNull();
+  });
+});

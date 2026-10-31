@@ -7,7 +7,7 @@ import { ZoomControls } from "./ui/ZoomControls.jsx";
 
 // Heatmaps canvas: static colours + a hover readout ("12 kills · players").
 // heat: { counts, max } for the colours. readout: [{ label side, one, many, array }] for hover.
-export function HeatmapCanvas({ imageSrc, heat, grid, readout, label }) {
+export function HeatmapCanvas({ imageSrc, heat, grid, readout, label, heatLevels }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
   const lastCell = useRef(-1);
@@ -25,10 +25,10 @@ export function HeatmapCanvas({ imageSrc, heat, grid, readout, label }) {
   }, [imageSrc]);
 
   useEffect(() => {
-    rendererRef.current.setHeat(heat, grid);
+    rendererRef.current.setHeat(heat, grid, heatLevels);
     lastCell.current = -1; // data changed: the readout must be recomputed
     setHover(null);
-  }, [heat, grid]);
+  }, [heat, grid, heatLevels]);
 
   // Readout for the cell under the pointer. Only recomputed when the cell changes.
   // Hidden while dragging the map, and off the map's edge.
@@ -46,7 +46,7 @@ export function HeatmapCanvas({ imageSrc, heat, grid, readout, label }) {
       const lines = readout
         .map((r) => [r, r.array[cell]])
         .filter(([, count]) => count > 0)
-        .map(([r, count]) => `${plural(count, r.one, r.many)} · ${r.side}`);
+        .map(([r, count]) => r.format ? r.format(count) : `${plural(count, r.one, r.many)} · ${r.side}`);
       setHover(lines.length ? { x, y, lines } : null);
       return;
     }

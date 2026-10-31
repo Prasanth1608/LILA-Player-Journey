@@ -9,7 +9,7 @@ const SIDES = [
 
 // Players / Bots grid of on-off switches. Any combination can be on at once.
 // Each switch shows its map symbol (doubles as the legend) and how many it would draw.
-export function LayerPanel({ match, enabled, onToggle, onAll, onClear }) {
+export function LayerPanel({ matches, enabled, onToggle, onAll, onClear }) {
   return (
     <section className="layer-panel" aria-label="Map layers">
     <div className="label-row">
@@ -32,7 +32,7 @@ export function LayerPanel({ match, enabled, onToggle, onAll, onClear }) {
               return (
                 <td key={side.id}>
                   {layer ? (
-                    <LayerToggle layer={layer} count={countLayer(match, layer)} on={enabled.has(layer.id)}
+                    <LayerToggle layer={layer} count={matches.reduce((total, match) => total + countLayer(match, layer), 0)} on={enabled.has(layer.id)}
                                  onToggle={() => onToggle(layer.id)} sideLabel={side.label} />
                   ) : (
                     <span className="layer-none" title="Bots don't loot">—</span>

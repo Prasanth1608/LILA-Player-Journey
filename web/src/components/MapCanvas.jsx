@@ -5,7 +5,7 @@ import { ZoomControls } from "./ui/ZoomControls.jsx";
 
 // Replay canvas: mounts the Replay renderer and hands it what to draw.
 // React only says WHAT to show; the Renderer handles HOW (and redraws on every clock tick).
-export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label }) {
+export function MapCanvas({ imageSrc, matches, layers, trailSeconds, clock, label, analysis = false }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
 
@@ -26,8 +26,8 @@ export function MapCanvas({ imageSrc, match, layers, trailSeconds, clock, label 
   }, [imageSrc]);
 
   useEffect(() => {
-    rendererRef.current.setScene(match, layers, trailSeconds);
-  }, [match, layers, trailSeconds]);
+    rendererRef.current.setScene(matches, layers, trailSeconds, analysis);
+  }, [matches, layers, trailSeconds, analysis]);
 
   return (
     // map-area: the space available; map-wrap: the square map itself (canvas + overlays)

@@ -46,7 +46,7 @@ export function buildField(counts, max, grid) {
 }
 
 // The coloured overlay for one view, at screen resolution (CSS size × pixel ratio)
-export function paintHeatCanvas(field, view, pixelRatio) {
+export function paintHeatCanvas(field, view, pixelRatio, levels = HEATMAP.levels) {
   const w = Math.max(1, Math.round(view.width * pixelRatio));
   const h = Math.max(1, Math.round(view.height * pixelRatio));
   const canvas = document.createElement("canvas");
@@ -54,7 +54,7 @@ export function paintHeatCanvas(field, view, pixelRatio) {
   canvas.height = h;
   const ctx = canvas.getContext("2d");
   const image = ctx.createImageData(w, h);
-  image.data.set(paintHeat(field.data, field.size, view, w, h, pixelRatio, HEATMAP.levels, HEATMAP.lineWidth));
+  image.data.set(paintHeat(field.data, field.size, view, w, h, pixelRatio, levels, HEATMAP.lineWidth));
   ctx.putImageData(image, 0, 0);
   return canvas;
 }

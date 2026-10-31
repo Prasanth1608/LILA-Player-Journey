@@ -175,6 +175,36 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 .stat.zero { color: var(--faint); }
 .stat.zero b { color: var(--faint); }
 
+.selection-limit {
+  margin: 8px 12px 12px;
+  padding: 9px 11px;
+  border: 1px solid;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.selection-limit--guidance {
+  color: #f2c45c;
+  background: rgba(217, 144, 25, 0.12);
+  border-color: rgba(217, 144, 25, 0.48);
+}
+.selection-limit--reached {
+  color: #ff7777;
+  background: rgba(210, 55, 55, 0.13);
+  border-color: rgba(220, 69, 69, 0.58);
+}
+:root[data-theme="light"] .selection-limit--guidance {
+  color: #855000;
+  background: #fff5d9;
+  border-color: #e4b64f;
+}
+:root[data-theme="light"] .selection-limit--reached {
+  color: #a51f1f;
+  background: #fff0f0;
+  border-color: #e28b8b;
+}
+
 /* ---------- Map area ---------- */
 .stage { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .stage-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
@@ -335,4 +365,17 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); o
 @media (min-width: 821px) and (max-width: 1100px) and (min-height: 560px) {
   .stage-body { display: flex; flex-direction: column; } /* layers below the map; map shrinks to fit */
   .map-column { flex: 1; } /* the map takes the space the layers leave */
+}
+
+
+/* Static multi-match Replay analysis replaces the animated timeline. */
+.analysis-timeline {
+  justify-content: center;
+  gap: 12px;
+  color: var(--muted, #9aa3ad);
+  font-size: 0.82rem;
+}
+.analysis-mode-label {
+  color: var(--text, #e8edf2);
+  font-weight: 650;
 }
